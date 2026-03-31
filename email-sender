@@ -1,0 +1,1933 @@
+/* ============================================================================
+   STANDARDIZED EMAIL SYSTEM - COMPLETE REPLACEMENT
+   File: email-sender.gs
+   
+   This file contains:
+   1. HTML Component Builders (cards, tables, buttons, lists, alerts)
+   2. Main Standardized Email Sender
+   3. All 20 Email Functions (backward compatible)
+   4. Helper Functions
+   ============================================================================ */
+
+/* ============================================================================
+   CONFIGURATION & CONSTANTS
+   ============================================================================ */
+
+const EMAIL_CONFIG = {
+  WIDTH: '600px',
+  COLORS: {
+    PRIMARY: '#3498db',
+    SUCCESS: '#27ae60',
+    WARNING: '#f39c12',
+    DANGER: '#e74c3c',
+    INFO: '#3498db',
+    DARK: '#2c3e50',
+    LIGHT: '#ecf0f1',
+    GRAY: '#95a5a6',
+    SECURITY: '#f39c12'  // Yellow/Orange for security tips
+  },
+  FONT_FAMILY: 'Arial, sans-serif, "Segoe UI", Tahoma, Geneva, Verdana'
+};
+
+/* ============================================================================
+   HTML COMPONENT BUILDERS - REUSABLE FUNCTIONS
+   ============================================================================ */
+
+/**
+ * Build email card component
+ * @param {string} title - Card title
+ * @param {string} content - Card content (can include HTML)
+ * @param {string} style - Card style: 'info', 'success', 'warning', 'danger'
+ * @returns {string} HTML card
+ */
+function buildEmailCard(title, content, style = 'info') {
+  const colors = {
+    'info': { border: EMAIL_CONFIG.COLORS.INFO, bg: '#e8f4f8' },
+    'success': { border: EMAIL_CONFIG.COLORS.SUCCESS, bg: '#e8f6f3' },
+    'warning': { border: EMAIL_CONFIG.COLORS.WARNING, bg: '#fef7e8' },
+    'danger': { border: EMAIL_CONFIG.COLORS.DANGER, bg: '#fdeaea' }
+  };
+  
+  const color = colors[style] || colors['info'];
+  
+  return `
+    <div style="background: linear-gradient(135deg, ${color.bg}, #ffffff); border: 2px solid ${color.border}; border-radius: 12px; padding: 25px; margin: 25px 0;">
+      <h3 style="color: ${EMAIL_CONFIG.COLORS.DARK}; margin: 0 0 15px 0; font-size: 1.1rem;">${title}</h3>
+      <div style="color: ${EMAIL_CONFIG.COLORS.DARK}; line-height: 1.6; white-space: pre-line;">${content}</div>
+    </div>
+  `;
+}
+
+/**
+ * Build email table component
+ * @param {Array} headers - Array of header strings
+ * @param {Array} rows - Array of row arrays
+ * @param {string} style - Table style: 'bordered', 'striped'
+ * @returns {string} HTML table
+ */
+function buildEmailTable(headers, rows, style = 'bordered') {
+  let tableHTML = `
+    <table style="width: 100%; border-collapse: collapse; margin: 20px 0; border: 1px solid #e9ecef;">
+      <thead>
+        <tr style="background: ${EMAIL_CONFIG.COLORS.DARK};">
+  `;
+  
+  // Add headers
+  headers.forEach(header => {
+    tableHTML += `<th style="padding: 12px; color: white; text-align: left; font-weight: 600; border: 1px solid #e9ecef;">${header}</th>`;
+  });
+  
+  tableHTML += `</tr></thead><tbody>`;
+  
+  // Add rows
+  rows.forEach((row, index) => {
+    const bgColor = style === 'striped' && index % 2 === 1 ? '#f8f9fa' : 'white';
+    tableHTML += `<tr style="background: ${bgColor};">`;
+    
+    row.forEach(cell => {
+      tableHTML += `<td style="padding: 12px; border: 1px solid #e9ecef; color: ${EMAIL_CONFIG.COLORS.DARK};">${cell}</td>`;
+    });
+    
+    tableHTML += `</tr>`;
+  });
+  
+  tableHTML += `</tbody></table>`;
+  
+  return tableHTML;
+}
+
+/**
+ * Build email button component
+ * @param {string} text - Button text
+ * @param {string} url - Button URL
+ * @param {string} style - Button style: 'primary', 'success', 'warning', 'danger'
+ * @returns {string} HTML button
+ */
+function buildEmailButton(text, url, style = 'primary') {
+  const colors = {
+    'primary': EMAIL_CONFIG.COLORS.PRIMARY,
+    'success': EMAIL_CONFIG.COLORS.SUCCESS,
+    'warning': EMAIL_CONFIG.COLORS.WARNING,
+    'danger': EMAIL_CONFIG.COLORS.DANGER
+  };
+  
+  const color = colors[style] || colors['primary'];
+  
+  return `
+    <div style="text-align: center; margin: 25px 0;">
+      <a href="${url}" style="display: inline-block; padding: 14px 32px; background: ${color}; color: white; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 1rem;">${text}</a>
+    </div>
+  `;
+}
+
+/**
+ * Build email list component
+ * @param {Array} items - Array of list items
+ * @param {boolean} ordered - True for numbered list, false for bullet list
+ * @returns {string} HTML list
+ */
+function buildEmailList(items, ordered = false) {
+  const tag = ordered ? 'ol' : 'ul';
+  let listHTML = `<${tag} style="color: ${EMAIL_CONFIG.COLORS.DARK}; line-height: 1.8; margin: 15px 0; padding-left: 25px;">`;
+  
+  items.forEach(item => {
+    listHTML += `<li style="margin-bottom: 8px;">${item}</li>`;
+  });
+  
+  listHTML += `</${tag}>`;
+  
+  return listHTML;
+}
+
+/**
+ * Build email alert component
+ * @param {string} message - Alert message
+ * @param {string} type - Alert type: 'info', 'success', 'warning', 'danger'
+ * @returns {string} HTML alert
+ */
+function buildEmailAlert(message, type = 'info') {
+  const colors = {
+    'info': { bg: '#d1ecf1', border: '#bee5eb', text: '#0c5460', icon: 'i' },
+    'success': { bg: '#d4edda', border: '#c3e6cb', text: '#155724', icon: '✓' },
+    'warning': { bg: '#fff3cd', border: '#ffeaa7', text: '#856404', icon: '!' },
+    'danger': { bg: '#f8d7da', border: '#f5c6cb', text: '#721c24', icon: '✗' }
+  };
+  
+  const color = colors[type] || colors['info'];
+  
+  return `
+    <div style="background: ${color.bg}; border: 1px solid ${color.border}; border-left: 4px solid ${color.border}; border-radius: 6px; padding: 15px; margin: 20px 0;">
+      <strong style="color: ${color.text};">[${color.icon}] </strong>
+      <span style="color: ${color.text}; line-height: 1.6;">${message}</span>
+    </div>
+  `;
+}
+
+/**
+ * Build credentials display card
+ * @param {Object} credentials - Object with credential fields
+ * @returns {string} HTML credentials card
+ */
+function buildCredentialsCard(credentials) {
+  let credentialsHTML = `
+    <div style="background: linear-gradient(135deg, #e8f4f8, #ffffff); border: 2px solid ${EMAIL_CONFIG.COLORS.PRIMARY}; border-radius: 12px; padding: 25px; margin: 25px 0;">
+      <h3 style="color: ${EMAIL_CONFIG.COLORS.DARK}; margin: 0 0 20px 0;">Login Credentials</h3>
+      <div style="display: grid; gap: 15px;">
+  `;
+  
+  for (const [key, value] of Object.entries(credentials)) {
+    credentialsHTML += `
+      <div style="display: flex; justify-content: space-between; padding: 12px; background: rgba(52, 152, 219, 0.1); border-radius: 6px;">
+        <strong style="color: ${EMAIL_CONFIG.COLORS.DARK};">${key}:</strong>
+        <span style="color: ${EMAIL_CONFIG.COLORS.PRIMARY}; font-weight: 600;">${value}</span>
+      </div>
+    `;
+  }
+  
+  credentialsHTML += `</div></div>`;
+  
+  return credentialsHTML;
+}
+
+/* ============================================================================
+   MAIN STANDARDIZED EMAIL SENDER
+   ============================================================================ */
+
+/**
+ * Main standardized email sender function
+ * @param {Object} emailParts - Email components
+ * @returns {Object} {success: boolean, message: string, error: string}
+ */
+function standardSendEmail(emailParts) {
+  try {
+    // Validate required fields
+    if (!emailParts || !emailParts.receiver) {
+      return { success: false, error: 'Receiver email is required' };
+    }
+    
+    if (!emailParts.body_greeting && !emailParts.body_intro && !emailParts.body_content) {
+      return { success: false, error: 'Email body content is required' };
+    }
+    
+    // Get sender email from Config B2
+    const configSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Config');
+    if (!configSheet) {
+      return { success: false, error: 'Config sheet not found' };
+    }
+    
+    const senderEmail = configSheet.getRange('B2').getValue();
+    if (!senderEmail) {
+      return { success: false, error: 'Sender email not configured in Config B2' };
+    }
+    
+    // Get system URL
+    const systemUrl = configSheet.getRange('B1').getValue() || '#';
+    
+    // Build subject with category prefix if provided
+    const subject = emailParts.subject || 'Holiday Management System Notification';
+    
+    // Build complete HTML email
+    const htmlBody = buildCompleteEmailHTML(emailParts, systemUrl);
+    
+    // Send email using GmailApp
+    GmailApp.sendEmail(
+      emailParts.receiver,
+      subject,
+      '', // Empty plain text (HTML only)
+      {
+        htmlBody: htmlBody,
+        from: senderEmail,
+        name: 'Holiday Management System'
+      }
+    );
+    
+    // Log to email history
+    const logResult = saveEmailHistory(
+      emailParts.receiver,
+      emailParts.emailType || subject,
+      emailParts.logDescription || 'Email sent',
+      'Sent',
+      emailParts.actualSender || 'System'
+    );
+    
+    return {
+      success: true,
+      message: 'Email sent successfully'
+    };
+    
+  } catch (error) {
+    console.error('Error in standardSendEmail:', error);
+    
+    // Try to log failure
+    try {
+      saveEmailHistory(
+        emailParts.receiver || 'Unknown',
+        emailParts.emailType || 'Email Send Failed',
+        'Failed to send: ' + error.toString(),
+        'Failed',
+        emailParts.actualSender || 'System'
+      );
+    } catch (logError) {
+      console.error('Error logging email failure:', logError);
+    }
+    
+    return {
+      success: false,
+      error: error.toString()
+    };
+  }
+}
+
+/**
+ * Build complete HTML email structure
+ * @param {Object} emailParts - Email components
+ * @param {string} systemUrl - System URL
+ * @returns {string} Complete HTML email
+ */
+function buildCompleteEmailHTML(emailParts, systemUrl) {
+  const currentYear = new Date().getFullYear();
+  
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    </head>
+    <body style="margin: 0; padding: 0; font-family: ${EMAIL_CONFIG.FONT_FAMILY}; background: #f8f9fa;">
+      <div style="max-width: ${EMAIL_CONFIG.WIDTH}; margin: 0 auto; padding: 20px;">
+        
+        <!-- Email Container -->
+        <div style="background: white; border-radius: 12px; box-shadow: 0 4px 12px rgba(44, 62, 80, 0.1); overflow: hidden;">
+          
+          <!-- Header -->
+          <div style="text-align: center; padding: 30px 20px; background: linear-gradient(135deg, ${EMAIL_CONFIG.COLORS.PRIMARY}, #2980b9);">
+            <img src="https://lh3.googleusercontent.com/d/11aw_4PB1m6dN-uvKFgtzgji400gqUd1C" 
+            alt="Company Logo" 
+            style="width: 60px; height: 60px; border-radius: 12px; margin-bottom: 15px; display: inline-block;">
+            <h1 style="color: white; margin: 0; font-size: 1.8rem; font-weight: 600;">Holiday Management System</h1>
+            ${emailParts.subtitle ? `<p style="color: rgba(255,255,255,0.9); margin: 10px 0 0 0; font-size: 1rem;">${emailParts.subtitle}</p>` : ''}
+          </div>
+          
+          <!-- Body Content -->
+          <div style="padding: 40px 30px;">
+            
+            ${emailParts.body_greeting ? `<p style="color: ${EMAIL_CONFIG.COLORS.DARK}; font-size: 1.2rem; margin: 0 0 20px 0; font-weight: 600;">${emailParts.body_greeting}</p>` : ''}
+            
+            ${emailParts.body_intro ? `<p style="color: #34495e; line-height: 1.8; margin: 0 0 20px 0; font-size: 1rem;">${emailParts.body_intro}</p>` : ''}
+            
+            ${emailParts.body_content || ''}
+            
+            ${emailParts.body_securitytips ? `
+              <div style="background: linear-gradient(135deg, #fef7e8, #ffffff); border-left: 4px solid ${EMAIL_CONFIG.COLORS.SECURITY}; border-radius: 6px; padding: 20px; margin: 25px 0;">
+                <strong style="color: #856404; display: block; margin-bottom: 10px; font-size: 1rem;">[!] Security Tips:</strong>
+                <p style="color: #856404; line-height: 1.6; margin: 0; font-size: 0.95rem;">${emailParts.body_securitytips}</p>
+              </div>
+            ` : ''}
+            
+            ${emailParts.actualSender && emailParts.actualSender !== 'System' ? `
+              <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e9ecef;">
+                <p style="color: ${EMAIL_CONFIG.COLORS.GRAY}; font-size: 0.9rem; margin: 0;">
+                  <strong>Action by:</strong> ${emailParts.actualSender}
+                </p>
+              </div>
+            ` : ''}
+            
+            ${emailParts.body_footer ? `
+              <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e9ecef;">
+                <p style="color: #34495e; line-height: 1.6; margin: 0; white-space: pre-line;">${emailParts.body_footer}</p>
+              </div>
+            ` : ''}
+            
+          </div>
+          
+          <!-- Footer -->
+          <div style="background: #f8f9fa; padding: 25px 30px; text-align: center; border-top: 1px solid #e9ecef;">
+            <p style="color: ${EMAIL_CONFIG.COLORS.GRAY}; margin: 0 0 10px 0; font-size: 0.9rem;">
+              Holiday Management System - ${currentYear}
+            </p>
+            <p style="color: ${EMAIL_CONFIG.COLORS.GRAY}; margin: 0; font-size: 0.85rem;">
+              This is an automated message. Please do not reply to this email.
+            </p>
+            ${systemUrl !== '#' ? `
+              <p style="margin: 15px 0 0 0;">
+                <a href="${systemUrl}" style="color: ${EMAIL_CONFIG.COLORS.PRIMARY}; text-decoration: none; font-size: 0.9rem;">Access System Portal</a>
+              </p>
+            ` : ''}
+          </div>
+          
+        </div>
+        
+      </div>
+    </body>
+    </html>
+  `;
+}
+
+/* ============================================================================
+   BACKWARD COMPATIBLE EMAIL FUNCTIONS - ALL 20 FUNCTIONS
+   ============================================================================ */
+
+/* ---------------------------------------------------------------------------
+   SYSTEM NOTIFICATIONS (Admin-focused)
+   --------------------------------------------------------------------------- */
+
+/**
+ * 1. Send OTP for System Reset
+ */
+function sendSystemResetOTP(adminEmail, adminName, otpCode) {
+  const otpCard = buildEmailCard(
+    'Your Verification Code',
+    `Your one-time password (OTP) for system reset is:\n\n${otpCode}\n\nThis code will expire in 10 minutes.`,
+    'info'
+  );
+  
+  return standardSendEmail({
+    receiver: adminEmail,
+    subject: 'System Reset Verification Code',
+    subtitle: 'Security Verification',
+    emailType: 'System Reset OTP',
+    actualSender: 'System',
+    body_greeting: `Hello ${adminName},`,
+    body_intro: 'You have requested to reset the Holiday Management System. Please use the verification code below to proceed.',
+    body_content: otpCard,
+    body_securitytips: 'Never share this code with anyone. If you did not request this reset, please contact your system administrator immediately.',
+    body_footer: 'Best regards,\nHoliday Management System',
+    logDescription: 'OTP code sent for system reset verification'
+  });
+}
+
+/**
+ * 2. Send Admin Welcome Email - FIXED to accept simple strings
+ * @param {string} adminEmail - Admin email address
+ * @param {string} adminName - Admin name
+ * @param {string} password - Temporary password
+ * @param {string} fullPermission - "Yes" or "No" string
+ * @param {string} receiveRequests - "Yes" or "No" string
+ * @param {string} createdBy - Name of admin who created this account
+ */
+function sendAdminWelcomeEmail(adminEmail, adminName, password, fullPermission, receiveRequests, createdBy) {
+  // Convert to strings if boolean received (backward compatibility)
+  const fullPermStr = (fullPermission === true || fullPermission === 'Yes' || fullPermission === 'yes') ? 'Yes' : 'No';
+  const receiveReqStr = (receiveRequests === true || receiveRequests === 'Yes' || receiveRequests === 'yes') ? 'Yes' : 'No';
+  
+  const credentials = buildCredentialsCard({
+    'Email Address': adminEmail,
+    'Temporary Password': password,
+    'Full Permission': fullPermStr === 'Yes' ? 'Yes - Can manage other admins' : 'No - Limited access',
+    'Receive Requests': receiveReqStr === 'Yes' ? 'Yes - Will receive notifications' : 'No - No notifications'
+  });
+  
+  const configSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Config');
+  const systemUrl = configSheet ? configSheet.getRange('B1').getValue() : '#';
+  const loginButton = buildEmailButton('Access Admin Portal', systemUrl, 'primary');
+  
+  return standardSendEmail({
+    receiver: adminEmail,
+    subject: 'Welcome to Holiday Management System - Admin Access',
+    subtitle: 'Administrator Account Created',
+    emailType: 'Admin Welcome',
+    actualSender: createdBy,
+    body_greeting: `Hello ${adminName},`,
+    body_intro: `Welcome to the Holiday Management System! Your administrator account has been created by ${createdBy}.`,
+    body_content: credentials + loginButton,
+    body_securitytips: 'Please change your password immediately after your first login. Never share your credentials with anyone.',
+    body_footer: 'Best regards,\nHoliday Management System',
+    logDescription: `Welcome email sent to new admin ${adminName}`
+  });
+}
+
+/**
+ * 3. Send Admin Reactivation Email - FIXED to accept simple strings
+ * @param {string} adminEmail - Admin email address
+ * @param {string} adminName - Admin name
+ * @param {string} fullPermission - "Yes" or "No" string
+ * @param {string} receiveRequests - "Yes" or "No" string
+ * @param {string} reactivatedBy - Name of admin who reactivated
+ */
+/**
+ * Send Admin Reactivation Email - COMPLETE FIX WITH PASSWORD
+ * File: email-sender.gs
+ * REPLACE the existing sendAdminReactivationEmail function
+ */
+function sendAdminReactivationEmail(adminEmail, adminName, fullPermission, receiveRequests, newPassword, reactivatedBy) {
+  // Convert to strings if boolean received
+  const fullPermStr = (fullPermission === true || fullPermission === 'Yes' || fullPermission === 'yes') ? 'Yes' : 'No';
+  const receiveReqStr = (receiveRequests === true || receiveRequests === 'Yes' || receiveRequests === 'yes') ? 'Yes' : 'No';
+  
+  // Build credentials card with new password
+  const credentials = buildCredentialsCard({
+    'Email Address': adminEmail,
+    'New Password': newPassword,
+    'Full Permission': fullPermStr === 'Yes' ? 'Yes - Can manage other admins' : 'No - Limited access',
+    'Receive Requests': receiveReqStr === 'Yes' ? 'Yes - Will receive notifications' : 'No - No notifications'
+  });
+  
+  const configSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Config');
+  const systemUrl = configSheet ? configSheet.getRange('B1').getValue() : '#';
+  const loginButton = buildEmailButton('Access Admin Portal', systemUrl, 'success');
+  
+  const importantNote = buildEmailAlert(
+    'Please change this password immediately after logging in for security purposes.',
+    'warning'
+  );
+  
+  return standardSendEmail({
+    receiver: adminEmail,
+    subject: 'Admin Account Reactivated - New Password',
+    subtitle: 'Account Reactivated',
+    emailType: 'Admin Reactivation',
+    actualSender: reactivatedBy,
+    body_greeting: `Hello ${adminName},`,
+    body_intro: `Good news! Your administrator account has been reactivated by ${reactivatedBy}. You can now access the system with your new credentials below.`,
+    body_content: credentials + importantNote + loginButton,
+    body_securitytips: 'Change your password immediately after login. Never share your credentials with anyone.',
+    body_footer: 'Best regards,\nHoliday Management System',
+    logDescription: `Reactivation email with password sent to admin ${adminName}`
+  });
+}
+
+/**
+ * 4. Send Password Change PIN Email
+ */
+function sendPasswordChangePIN(adminEmail, adminName, pinCode) {
+  const pinCard = buildEmailCard(
+    'Your Verification PIN',
+    `Your verification PIN for password change is:\n\n${pinCode}\n\nThis PIN will expire in 10 minutes.`,
+    'warning'
+  );
+  
+  return standardSendEmail({
+    receiver: adminEmail,
+    subject: 'Password Change Verification PIN',
+    subtitle: 'Security Verification',
+    emailType: 'Password Change PIN',
+    actualSender: 'System',
+    body_greeting: `Hello ${adminName},`,
+    body_intro: 'You have requested to change your password. Please use the verification PIN below to proceed.',
+    body_content: pinCard,
+    body_securitytips: 'Never share this PIN with anyone. If you did not request this change, please contact your system administrator immediately.',
+    body_footer: 'Best regards,\nHoliday Management System',
+    logDescription: 'PIN sent for password change verification'
+  });
+}
+
+/**
+ * 5. Send Password Change Confirmation Email
+ */
+function sendPasswordChangeConfirmation(adminEmail, adminName) {
+  const confirmationAlert = buildEmailAlert(
+    'Your password has been successfully changed. If you did not make this change, please contact your administrator immediately.',
+    'success'
+  );
+  
+  const timestamp = new Date().toLocaleString('en-US', { 
+    dateStyle: 'full', 
+    timeStyle: 'long' 
+  });
+  
+  return standardSendEmail({
+    receiver: adminEmail,
+    subject: 'Password Successfully Changed',
+    subtitle: 'Security Confirmation',
+    emailType: 'Password Change Confirmation',
+    actualSender: 'System',
+    body_greeting: `Hello ${adminName},`,
+    body_intro: 'This email confirms that your password was successfully changed.',
+    body_content: confirmationAlert + `<p style="color: #7f8c8d; margin-top: 20px;">Changed on: ${timestamp}</p>`,
+    body_securitytips: 'Always use a strong, unique password. Never reuse passwords from other accounts.',
+    body_footer: 'Best regards,\nHoliday Management System',
+    logDescription: 'Password change confirmation sent'
+  });
+}
+
+/**
+ * 6. Send System Reset Notification - FIXED to use string parameters
+ * @param {string} resetType - Type of reset: "Immediate" or "Scheduled"
+ * @param {string} newStartDate - New start date (YYYY-MM-DD format)
+ * @param {string} newEndDate - New end date (YYYY-MM-DD format)
+ * @param {string} scheduleDateTime - Schedule datetime for scheduled resets (ISO format) or null
+ * @param {string} executedBy - Admin who executed/scheduled the reset
+ */
+function sendSystemResetNotification(resetType, newStartDate, newEndDate, scheduleDateTime, executedBy) {
+  const isScheduled = resetType.toLowerCase().includes('scheduled');
+  
+  // Build reset info array
+  const resetInfo = [
+    `Reset Type: ${resetType}`,
+    `New Start Date: ${formatDateForDisplay(newStartDate)}`,
+    `New End Date: ${formatDateForDisplay(newEndDate)}`
+  ];
+  
+  // Add schedule time or execution time
+  if (isScheduled && scheduleDateTime) {
+    resetInfo.push(`Scheduled For: ${formatDateTimeForDisplay(scheduleDateTime)}`);
+  } else {
+    resetInfo.push(`Executed At: ${formatDateTimeForDisplay(new Date())}`);
+  }
+  
+  const resetCard = buildEmailCard(
+    'System Reset Details',
+    resetInfo.join('\n'),
+    'warning'
+  );
+  
+  const importantNote = buildEmailAlert(
+    'All employee balances and leave request statuses have been reset to their opening values. This action cannot be undone.',
+    'warning'
+  );
+  
+  return standardSendEmail({
+    receiver: null, // Will be set by batch sender
+    subject: `System Reset ${isScheduled ? 'Scheduled' : 'Executed'}`,
+    subtitle: 'System Reset Notification',
+    emailType: 'System Reset',
+    actualSender: executedBy,
+    body_greeting: 'Hello Administrator,',
+    body_intro: `The Holiday Management System has been ${isScheduled ? 'scheduled for reset' : 'reset'}.`,
+    body_content: resetCard + importantNote,
+    body_footer: 'Best regards,\nHoliday Management System',
+    logDescription: `System reset notification - ${resetType}`
+  });
+}
+
+/**
+ * 7. Send System Reset Cancellation
+ */
+function sendSystemResetCancellation(cancelledBy) {
+  const cancellationAlert = buildEmailAlert(
+    'The scheduled system reset has been cancelled. No changes have been made to employee balances or leave requests.',
+    'info'
+  );
+  
+  return standardSendEmail({
+    receiver: null, // Will be set by batch sender
+    subject: 'Scheduled System Reset Cancelled',
+    subtitle: 'System Reset Cancellation',
+    emailType: 'System Reset Cancellation',
+    actualSender: cancelledBy,
+    body_greeting: 'Hello Administrator,',
+    body_intro: 'The scheduled system reset has been cancelled.',
+    body_content: cancellationAlert,
+    body_footer: 'Best regards,\nHoliday Management System',
+    logDescription: 'System reset cancellation notification'
+  });
+}
+
+/**
+ * 8. Send Scheduled Reset Error Notification
+ */
+function sendScheduledResetError(errorMessage, errorTime) {
+  const errorCard = buildEmailCard(
+    'Error Details',
+    `Error Message: ${errorMessage}\n\nOccurred At: ${formatDateTimeForDisplay(errorTime)}`,
+    'danger'
+  );
+  
+  const actionAlert = buildEmailAlert(
+    'Please review the error and attempt the system reset manually if needed.',
+    'danger'
+  );
+  
+  return standardSendEmail({
+    receiver: null, // Will be set by batch sender
+    subject: 'Scheduled System Reset Failed',
+    subtitle: 'System Error Alert',
+    emailType: 'Scheduled Reset Error',
+    actualSender: 'System',
+    body_greeting: 'Hello Administrator,',
+    body_intro: 'The scheduled system reset has failed to execute.',
+    body_content: errorCard + actionAlert,
+    body_footer: 'Best regards,\nHoliday Management System',
+    logDescription: `Scheduled reset error: ${errorMessage}`
+  });
+}
+
+/**
+ * 9. Send System End Date Reminder
+ */
+function sendSystemEndDateReminder(adminEmail, adminName, endDate, daysRemaining) {
+  const reminderCard = buildEmailCard(
+    'System Period Ending Soon',
+    `Current Period End Date: ${formatDateForDisplay(endDate)}\n\nDays Remaining: ${daysRemaining} days`,
+    'warning'
+  );
+  
+  const actionItems = buildEmailList([
+    'Review current system period dates',
+    'Prepare for the next period if needed',
+    'Consider scheduling a system reset',
+    'Ensure all pending leave requests are processed'
+  ], false);
+  
+  return standardSendEmail({
+    receiver: adminEmail,
+    subject: `System End Date Reminder - ${daysRemaining} Days Remaining`,
+    subtitle: 'Period End Reminder',
+    emailType: 'System End Reminder',
+    actualSender: 'System',
+    body_greeting: `Hello ${adminName},`,
+    body_intro: 'This is a reminder that the current Holiday Management System period is approaching its end date.',
+    body_content: reminderCard + '<h4 style="color: #2c3e50; margin: 25px 0 15px 0;">Recommended Actions:</h4>' + actionItems,
+    body_footer: 'Best regards,\nHoliday Management System',
+    logDescription: `System end reminder sent - ${daysRemaining} days remaining`
+  });
+}
+
+/* ---------------------------------------------------------------------------
+   EMPLOYEE NOTIFICATIONS
+   --------------------------------------------------------------------------- */
+
+/**
+ * 10. Send Employee Welcome Email - FIXED VERSION
+ * @param {string} employeeName - Employee name
+ * @param {string} employeeEmail - Employee email address
+ * @param {string} employeeId - Employee ID
+ * @param {string} password - Temporary password
+ * @param {string} createdBy - Admin who created the account
+ */
+function sendEmployeeWelcomeEmail(employeeName, employeeEmail, employeeId, password, createdBy) {
+  const credentials = buildCredentialsCard({
+    'Employee ID': employeeId,
+    'Email Address': employeeEmail,
+    'Temporary Password': password
+  });
+  
+  const configSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Config');
+  const systemUrl = configSheet ? configSheet.getRange('B1').getValue() : '#';
+  const loginButton = buildEmailButton('Access Employee Portal', systemUrl, 'primary');
+  
+  return standardSendEmail({
+    receiver: employeeEmail,
+    subject: 'Welcome to Holiday Management System - Employee Access',
+    subtitle: 'Employee Account Created',
+    emailType: 'Employee Welcome',
+    actualSender: createdBy,
+    body_greeting: `Hello ${employeeName},`,
+    body_intro: `Welcome to the Holiday Management System! Your employee account has been created by ${createdBy}.`,
+    body_content: credentials + loginButton,
+    body_securitytips: 'Please change your password immediately after your first login. Never share your credentials with anyone.',
+    body_footer: 'Best regards,\nHoliday Management System',
+    logDescription: `Welcome email sent to new employee ${employeeName}`
+  });
+}
+
+/* ============================================================================
+   PHASE 2: EMPLOYEE BALANCE & REQUESTS - FIXED FUNCTIONS
+   File: email-sender.gs
+   
+   Replace these 2 functions:
+   - #11: sendBalanceUpdate
+   - #12: sendLeaveRequestNotification
+   ============================================================================ */
+
+/**
+ * 11. Send Employee Balance Update - FIXED to use string parameters
+ * @param {string} employeeEmail - Employee email address
+ * @param {string} employeeName - Employee name
+ * @param {string} previousBalance - Previous balance value
+ * @param {string} changeAmount - Amount of change (+ or -)
+ * @param {string} newBalance - New balance value
+ * @param {string} reason - Reason for balance update
+ * @param {string} updatedBy - Admin who updated the balance
+ */
+function sendBalanceUpdate(employeeEmail, employeeName, previousBalance, changeAmount, newBalance, reason, updatedBy) {
+  const balanceTable = buildEmailTable(
+    ['Item', 'Value'],
+    [
+      ['Previous Balance', previousBalance || 'N/A'],
+      ['Change Amount', changeAmount || 'N/A'],
+      ['New Balance', newBalance],
+      ['Update Reason', reason || 'Administrative adjustment']
+    ],
+    'bordered'
+  );
+  
+  return standardSendEmail({
+    receiver: employeeEmail,
+    subject: 'Leave Balance Updated',
+    subtitle: 'Balance Update Notification',
+    emailType: 'Balance Update',
+    actualSender: updatedBy || 'Administrator',
+    body_greeting: `Hello ${employeeName},`,
+    body_intro: 'Your leave balance has been updated by an administrator.',
+    body_content: balanceTable,
+    body_footer: 'Best regards,\nHoliday Management System',
+    logDescription: `Balance updated for ${employeeName} - New: ${newBalance}, Previous: ${previousBalance}, Change: ${changeAmount}`
+  });
+}
+
+/**
+ * 12. Send New Leave Request to Admins - FIXED to use string parameters
+ * @param {string} employeeName - Employee name
+ * @param {string} employeeId - Employee ID
+ * @param {string} leaveType - Type of leave (Annual, Emergency, Sick)
+ * @param {string} startDate - Leave start date
+ * @param {string} endDate - Leave end date
+ * @param {string} duration - Duration in days
+ * @param {string} reason - Reason for leave
+ * @param {string} requestDate - Date request was submitted
+ */
+function sendLeaveRequestNotification(employeeName, employeeId, leaveType, startDate, endDate, duration, reason, requestDate) {
+  const requestTable = buildEmailTable(
+    ['Field', 'Details'],
+    [
+      ['Employee Name', employeeName],
+      ['Employee ID', employeeId],
+      ['Leave Type', leaveType],
+      ['Start Date', formatDateForDisplay(startDate)],
+      ['End Date', formatDateForDisplay(endDate)],
+      ['Duration', duration + ' days'],
+      ['Reason', reason || 'No reason provided'],
+      ['Requested On', formatDateTimeForDisplay(requestDate)]
+    ],
+    'striped'
+  );
+  
+  const configSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Config');
+  const systemUrl = configSheet ? configSheet.getRange('B1').getValue() : '#';
+  const reviewButton = buildEmailButton('Review Request', systemUrl, 'primary');
+  
+  // RETURN EMAIL PARTS OBJECT (don't call standardSendEmail here)
+  return {
+    receiver: null, // Will be set by batch sender
+    subject: `New ${leaveType} Leave Request - ${employeeName}`,
+    subtitle: 'New Leave Request',
+    emailType: 'Leave Request',
+    actualSender: 'System',
+    body_greeting: 'Hello Administrator,',
+    body_intro: `A new ${leaveType} leave request has been submitted and requires your review.`,
+    body_content: requestTable + reviewButton,
+    body_footer: 'Best regards,\nHoliday Management System',
+    logDescription: `Leave request from ${employeeName} - ${leaveType} from ${formatDateForDisplay(startDate)} to ${formatDateForDisplay(endDate)}`
+  };
+}
+
+/**
+ * Send Unified Leave Response - REPLACES all 3 email functions
+ * REPLACE sendLeaveApproved, sendLeaveRejected, and sendLeavePartiallyApproved
+ * in email-sender.gs with this single function
+ */
+function sendLeaveResponse(employeeEmail, employeeName, leaveType, requestId, daysData, adminName, adminComments, actionDate, initialBalanceCurrent, initialBalanceOnHold, initialBalanceNet, finalBalanceCurrent, finalBalanceOnHold, finalBalanceNet) {
+  
+  // Calculate totals
+  const totalDays = daysData.length;
+  const approvedCount = daysData.filter(d => d.status === 'Approved').length;
+  const pendingCount = daysData.filter(d => d.status === 'Pending').length;
+  const rejectedCount = daysData.filter(d => d.status === 'Rejected').length;
+  const weeklyHolidayCount = daysData.filter(d => d.isWeeklyHoliday).length;
+  const netTotalDays = totalDays - weeklyHolidayCount;
+  
+  // Calculate net counts
+  const approvedNetCount = daysData.filter(d => d.status === 'Approved' && !d.isWeeklyHoliday).length;
+  const pendingNetCount = daysData.filter(d => d.status === 'Pending' && !d.isWeeklyHoliday).length;
+  const rejectedNetCount = daysData.filter(d => d.status === 'Rejected' && !d.isWeeklyHoliday).length;
+  
+  // Determine response type and subject
+  let responseType, cardColor, cardIcon;
+  if (rejectedCount === 0 && pendingCount === 0 && approvedCount === totalDays) {
+    responseType = 'Approved';
+    cardColor = 'success';
+    cardIcon = '✓';
+  } else if (approvedCount === 0 && pendingCount === 0 && rejectedCount === totalDays) {
+    responseType = 'Rejected';
+    cardColor = 'danger';
+    cardIcon = '✗';
+  } else if (approvedCount > 0) {
+    responseType = 'Partially Approved';
+    cardColor = 'warning';
+    cardIcon = '⚠';
+  } else if (rejectedCount > 0 && approvedCount === 0) {
+    responseType = 'Partially Rejected';
+    cardColor = 'warning';
+    cardIcon = '⚠';
+  } else {
+    responseType = 'Reviewed';
+    cardColor = 'info';
+    cardIcon = 'ℹ';
+  }
+  
+  const requestIdDisplay = requestId ? `Request ID: ${requestId}` : '';
+  
+  // Summary section
+  const summaryCard = `
+    <div style="background: #f8f9fa; border-left: 4px solid #3498db; border-radius: 6px; padding: 15px; margin: 20px 0;">
+      <h4 style="margin: 0 0 10px 0; color: #2c3e50;">Response Summary</h4>
+      <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
+        <div style="text-align: center;">
+          <div style="font-size: 0.85em; color: #7f8c8d;">Approved</div>
+          <div style="font-size: 1.3em; font-weight: bold; color: #27ae60;">${approvedCount} days${approvedNetCount !== approvedCount ? ` (${approvedNetCount} net)` : ''}</div>
+        </div>
+        <div style="text-align: center;">
+          <div style="font-size: 0.85em; color: #7f8c8d;">Pending</div>
+          <div style="font-size: 1.3em; font-weight: bold; color: #f39c12;">${pendingCount} days${pendingNetCount !== pendingCount ? ` (${pendingNetCount} net)` : ''}</div>
+        </div>
+        <div style="text-align: center;">
+          <div style="font-size: 0.85em; color: #7f8c8d;">Rejected</div>
+          <div style="font-size: 1.3em; font-weight: bold; color: #e74c3c;">${rejectedCount} days${rejectedNetCount !== rejectedCount ? ` (${rejectedNetCount} net)` : ''}</div>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  // Build detailed table rows
+  let tableRows = '';
+  daysData.forEach(day => {
+    const weekdayAbbr = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][new Date(day.date).getDay()];
+    const dateFormatted = `${weekdayAbbr}, ${formatDateForDisplay(day.date)}`;
+    const holidayMark = day.isWeeklyHoliday ? '✓' : '';
+    const approvedMark = day.status === 'Approved' ? '✓' : '';
+    const pendingMark = day.status === 'Pending' ? '○' : '';
+    const rejectedMark = day.status === 'Rejected' ? '✗' : '';
+    
+    tableRows += `
+      <tr style="border-bottom: 1px solid #ecf0f1;">
+        <td style="padding: 10px; border: 1px solid #dee2e6;">${dateFormatted}</td>
+        <td style="padding: 10px; border: 1px solid #dee2e6; text-align: center;">${holidayMark}</td>
+        <td style="padding: 10px; border: 1px solid #dee2e6; text-align: center; color: #27ae60; font-weight: bold;">${approvedMark}</td>
+        <td style="padding: 10px; border: 1px solid #dee2e6; text-align: center; color: #f39c12; font-weight: bold;">${pendingMark}</td>
+        <td style="padding: 10px; border: 1px solid #dee2e6; text-align: center; color: #e74c3c; font-weight: bold;">${rejectedMark}</td>
+      </tr>
+    `;
+  });
+  
+  // Total row
+  const totalRow = `
+    <tr style="background: #f8f9fa; font-weight: bold; border-top: 2px solid #3498db;">
+      <td style="padding: 12px; border: 1px solid #dee2e6;">
+        Total: ${totalDays} days
+        ${netTotalDays !== totalDays ? `<br><span style="font-size: 0.9em; color: #7f8c8d;">(${netTotalDays} net)</span>` : ''}
+      </td>
+      <td style="padding: 12px; border: 1px solid #dee2e6; text-align: center;">${weeklyHolidayCount}</td>
+      <td style="padding: 12px; border: 1px solid #dee2e6; text-align: center; color: #27ae60;">
+        ${approvedCount}
+        ${approvedNetCount !== approvedCount ? `<br><span style="font-size: 0.9em;">(${approvedNetCount} net)</span>` : ''}
+      </td>
+      <td style="padding: 12px; border: 1px solid #dee2e6; text-align: center; color: #f39c12;">
+        ${pendingCount}
+        ${pendingNetCount !== pendingCount ? `<br><span style="font-size: 0.9em;">(${pendingNetCount} net)</span>` : ''}
+      </td>
+      <td style="padding: 12px; border: 1px solid #dee2e6; text-align: center; color: #e74c3c;">
+        ${rejectedCount}
+        ${rejectedNetCount !== rejectedCount ? `<br><span style="font-size: 0.9em;">(${rejectedNetCount} net)</span>` : ''}
+      </td>
+    </tr>
+  `;
+  
+  const detailedTable = `
+    <table style="width: 100%; border-collapse: collapse; margin: 20px 0; border: 1px solid #dee2e6;">
+      <thead>
+        <tr style="background: #34495e; color: white;">
+          <th style="padding: 12px; border: 1px solid #dee2e6; text-align: left;">Date</th>
+          <th style="padding: 12px; border: 1px solid #dee2e6; text-align: center;">Weekly Holiday</th>
+          <th style="padding: 12px; border: 1px solid #dee2e6; text-align: center;">Approved</th>
+          <th style="padding: 12px; border: 1px solid #dee2e6; text-align: center;">Pending</th>
+          <th style="padding: 12px; border: 1px solid #dee2e6; text-align: center;">Rejected</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${tableRows}
+        ${totalRow}
+      </tbody>
+    </table>
+  `;
+  
+  const statusCard = buildEmailCard(
+    `Leave Request ${responseType} ${cardIcon}`,
+    getResponseMessage(responseType),
+    cardColor
+  );
+  
+  // Request info table
+  const requestTable = buildEmailTable(
+    ['Field', 'Details'],
+    [
+      requestId ? ['Request ID', requestId] : null,
+      ['Leave Type', leaveType],
+      ['Reviewed By', adminName],
+      ['Reviewed On', formatDateTimeForDisplay(actionDate)]
+    ].filter(row => row !== null),
+    'bordered'
+  );
+  
+  // Balance information
+  const balanceTable = buildEmailTable(
+    ['Balance Type', 'Before Response', 'After Response'],
+    [
+      ['Current Balance', initialBalanceCurrent || 'N/A', finalBalanceCurrent || 'N/A'],
+      ['On-Hold Balance', initialBalanceOnHold || 'N/A', finalBalanceOnHold || 'N/A'],
+      ['Net Available', 
+       `<strong style="color: #27ae60;">${initialBalanceNet || 'N/A'}</strong>`, 
+       `<strong style="color: #27ae60;">${finalBalanceNet || 'N/A'}</strong>`]
+    ],
+    'bordered'
+  );
+  
+  const commentsSection = adminComments ? 
+    buildEmailCard('Admin Comments', adminComments, 'info') : '';
+  
+  const nextSteps = buildEmailList(getNextSteps(responseType), false);
+  
+  return standardSendEmail({
+    receiver: employeeEmail,
+    subject: requestId ? `Leave Request ${requestId} ${responseType}` : `Leave Request ${responseType}`,
+    subtitle: requestIdDisplay || 'Leave Request Status',
+    emailType: `Leave ${responseType}`,
+    actualSender: adminName,
+    body_greeting: `Hello ${employeeName},`,
+    body_intro: `Your leave request has been reviewed.`,
+    body_content: statusCard + summaryCard + '<h4 style="color: #2c3e50; margin: 20px 0 10px 0;">Detailed Response:</h4>' + detailedTable + requestTable + '<h4 style="color: #2c3e50; margin: 20px 0 10px 0;">Balance Information:</h4>' + balanceTable + commentsSection + '<h4 style="color: #2c3e50; margin: 25px 0 15px 0;">Next Steps:</h4>' + nextSteps,
+    body_footer: 'Best regards,\nHoliday Management System',
+    logDescription: `Leave request ${responseType.toLowerCase()} - ${leaveType} ${requestId || ''}`
+  });
+}
+
+/**
+ * Helper: Get response message based on type
+ */
+function getResponseMessage(responseType) {
+  switch(responseType) {
+    case 'Approved':
+      return 'Great news! Your leave request has been approved. You can enjoy your time off as planned.';
+    case 'Rejected':
+      return 'Unfortunately, your leave request could not be approved at this time. Please review the details below.';
+    case 'Partially Approved':
+      return 'Your leave request has been partially approved. Some dates were approved while others are pending or rejected.';
+    case 'Partially Rejected':
+      return 'Your leave request has been partially rejected. Some dates are still pending review.';
+    default:
+      return 'Your leave request has been reviewed. Please see the details below.';
+  }
+}
+
+/**
+ * Helper: Get next steps based on response type
+ */
+function getNextSteps(responseType) {
+  switch(responseType) {
+    case 'Approved':
+      return [
+        'Your approved leave will be automatically deducted from your balance',
+        'Ensure all pending tasks are completed before your leave',
+        'Set up an out-of-office message if needed',
+        'Enjoy your time off!'
+      ];
+    case 'Rejected':
+      return [
+        'You may submit a new request for different dates',
+        'Contact your administrator to discuss alternatives',
+        'Review company leave policies for more information'
+      ];
+    case 'Partially Approved':
+      return [
+        'Only approved dates will be deducted from your balance',
+        'Pending dates are still under review',
+        'You may submit a new request for rejected dates',
+        'Contact your administrator if you have questions'
+      ];
+    case 'Partially Rejected':
+      return [
+        'Pending dates are still under review',
+        'You may submit a new request for rejected dates',
+        'Contact your administrator to discuss alternatives'
+      ];
+    default:
+      return [
+        'Contact your administrator if you have questions',
+        'Review the detailed response above'
+      ];
+  }
+}
+
+/**
+ * 16. Send Holiday Announcement - FIXED to use string parameters
+ * @param {string} holidayName - Name of the holiday
+ * @param {string} holidayDate - Date of the holiday
+ * @param {string} holidayDescription - Description of the holiday
+ */
+function sendHolidayAnnouncement(holidayName, holidayDate, holidayDescription) {
+  const holidayCard = buildEmailCard(
+    holidayName,
+    `Date: ${formatDateForDisplay(holidayDate)}\n\n${holidayDescription || 'Official holiday - offices will be closed.'}`,
+    'success'
+  );
+  
+  const importantNotes = buildEmailList([
+    'This is an official holiday - offices will be closed',
+    'If you are scheduled to work on this holiday, compensation will be added to your leave balance',
+    'Please plan your work schedule accordingly',
+    'For urgent matters, contact your supervisor'
+  ], false);
+  
+  return standardSendEmail({
+    receiver: null, // Will be set by batch sender
+    subject: `Holiday Announcement - ${holidayName}`,
+    subtitle: 'Official Holiday Announcement',
+    emailType: 'Holiday Announcement',
+    actualSender: 'System',
+    body_greeting: 'Hello Team Member,',
+    body_intro: 'We would like to inform you about an upcoming official holiday:',
+    body_content: holidayCard + '<h4 style="color: #2c3e50; margin: 25px 0 15px 0;">Important Notes:</h4>' + importantNotes,
+    body_footer: 'Best regards,\nHoliday Management System',
+    logDescription: `Holiday announcement - ${holidayName} on ${formatDateForDisplay(holidayDate)}`
+  });
+}
+
+/**
+ * 17. Send Holiday Assignment Notification - SUPPORTS MULTIPLE DATES
+ * @param {string} employeeEmail - Employee email address
+ * @param {string} employeeName - Employee name
+ * @param {string} holidayName - Name of the holiday
+ * @param {string} holidayDate - Single date OR multiple dates formatted as list
+ * @param {string} status - Assignment status: "Working" or "Off"
+ * @param {string} assignedBy - Admin who made the assignment
+ */
+function sendHolidayAssignment(employeeEmail, employeeName, holidayName, holidayDate, status, assignedBy, cardType, introMessage) {
+  cardType = cardType || 'info';
+  introMessage = introMessage || 'Your holiday assignment details are below.';
+  
+  const assignmentCard = buildEmailCard(
+    `Holiday Assignment: ${status}`,
+    `<strong>Holiday:</strong> ${holidayName}<br><br><strong>Your Assignment:</strong><br><br>${holidayDate}`,
+    cardType
+  );
+  
+  const infoAlert = buildEmailAlert(introMessage, cardType);
+  
+  const importantInfo = buildEmailList([
+    'This assignment has been finalized by your administrator',
+    status.includes('Working') ? 'Compensation days will be added to your balance automatically for working days' : 'No action required from your side',
+    'Please plan your schedule accordingly',
+    'For any questions, contact your supervisor or HR department'
+  ], false);
+  
+  return standardSendEmail({
+    receiver: employeeEmail,
+    subject: `Holiday Assignment - ${holidayName}`,
+    subtitle: status,
+    emailType: 'Holiday Assignment',
+    actualSender: assignedBy,
+    body_greeting: `Hello ${employeeName},`,
+    body_intro: 'We would like to inform you about your assignment for the upcoming official holiday:',
+    body_content: assignmentCard + infoAlert + '<h4 style="color: #2c3e50; margin: 25px 0 15px 0;">Important Information:</h4>' + importantInfo,
+    body_footer: 'Best regards,\nHoliday Management System',
+    logDescription: `Holiday assignment - ${employeeName} - ${status} on ${holidayName}`
+  });
+}
+
+/**
+ * 18. Send Auto Compensation Notification - FIXED to use string parameters
+ * @param {string} employeeEmail - Employee email address
+ * @param {string} employeeName - Employee name
+ * @param {string} holidayName - Name of the holiday
+ * @param {string} holidayDate - Date worked
+ * @param {string} compensationDays - Number of compensation days added
+ * @param {string} newBalance - New leave balance
+ */
+function sendAutoCompensation(employeeEmail, employeeName, holidayName, holidayDate, compensationDays, newBalance) {
+  const compensationCard = buildEmailCard(
+    'Holiday Compensation Added',
+    `Holiday: ${holidayName}\nDate Worked: ${formatDateForDisplay(holidayDate)}\n\nCompensation Days: ${compensationDays}\nNew Balance: ${newBalance} days`,
+    'success'
+  );
+  
+  const thankYouMessage = buildEmailAlert(
+    'Thank you for your dedication and hard work during the holiday period!',
+    'success'
+  );
+  
+  return standardSendEmail({
+    receiver: employeeEmail,
+    subject: 'Holiday Compensation Days Added',
+    subtitle: 'Holiday Work Compensation',
+    emailType: 'Auto Compensation',
+    actualSender: 'System',
+    body_greeting: `Hello ${employeeName},`,
+    body_intro: 'We have identified that you worked on an official holiday. As per company policy, compensation days have been added to your leave balance.',
+    body_content: compensationCard + thankYouMessage,
+    body_footer: 'Best regards,\nHoliday Management System',
+    logDescription: `Auto compensation added - ${compensationDays} days for ${holidayName}`
+  });
+}
+
+/**
+ * 19. Send Holiday Wishes - FIXED to use string parameters
+ * @param {string} employeeEmail - Employee email address
+ * @param {string} employeeName - Employee name
+ * @param {string} startDate - Leave start date
+ * @param {string} endDate - Leave end date
+ * @param {string} duration - Duration in days
+ */
+function sendHolidayWishes(employeeEmail, employeeName, startDate, endDate, duration) {
+  const wishesCard = `
+    <div style="text-align: center; margin: 30px 0;">
+      <div style="background: linear-gradient(135deg, #fef7ff, #f3e8ff); border: 2px solid #d8b4fe; border-radius: 12px; padding: 30px;">
+        <h2 style="color: #7c3aed; margin: 0; font-size: 2rem;">Happy Holidays!</h2>
+      </div>
+    </div>
+  `;
+  
+  const leaveInfo = buildEmailTable(
+    ['Leave Period', 'Details'],
+    [
+      ['Start Date', formatDateForDisplay(startDate)],
+      ['End Date', formatDateForDisplay(endDate)],
+      ['Duration', duration + ' days']
+    ],
+    'bordered'
+  );
+  
+  return standardSendEmail({
+    receiver: employeeEmail,
+    subject: 'Enjoy Your Holiday!',
+    subtitle: 'Holiday Wishes',
+    emailType: 'Holiday Wishes',
+    actualSender: 'System',
+    body_greeting: `Dear ${employeeName},`,
+    body_intro: 'We hope you have a wonderful time on your annual leave! Take this time to relax, recharge, and enjoy precious moments with your loved ones.',
+    body_content: wishesCard + leaveInfo,
+    body_footer: 'Warm regards,\nYour Team at Holiday Management System',
+    logDescription: `Holiday wishes sent to ${employeeName} for leave starting ${formatDateForDisplay(startDate)}`
+  });
+}
+
+/**
+ * 20. Send Holiday End Reminder - FIXED to use string parameters
+ * @param {string} employeeEmail - Employee email address
+ * @param {string} employeeName - Employee name
+ * @param {string} endDate - Leave end date
+ * @param {string} daysRemaining - Days remaining until leave ends
+ * @param {string} returnDate - Return to work date
+ */
+function sendHolidayEndReminder(employeeEmail, employeeName, endDate, daysRemaining, returnDate) {
+  const reminderCard = buildEmailCard(
+    'Your Holiday is Ending Soon',
+    `End Date: ${formatDateForDisplay(endDate)}\nDays Remaining: ${daysRemaining}\nReturn Date: ${formatDateForDisplay(returnDate)}`,
+    'info'
+  );
+  
+  const preparationList = buildEmailList([
+    'Prepare to return to work on ' + formatDateForDisplay(returnDate),
+    'Check your email for any urgent updates',
+    'Review your schedule for upcoming tasks',
+    'Ensure you have completed any pre-return preparations'
+  ], false);
+  
+  return standardSendEmail({
+    receiver: employeeEmail,
+    subject: 'Holiday End Reminder',
+    subtitle: 'Leave Period Ending',
+    emailType: 'Holiday End Reminder',
+    actualSender: 'System',
+    body_greeting: `Hello ${employeeName},`,
+    body_intro: 'We hope you are having a great time on your annual leave! This is a friendly reminder that your holiday period will be ending soon.',
+    body_content: reminderCard + '<h4 style="color: #2c3e50; margin: 25px 0 15px 0;">Preparation Checklist:</h4>' + preparationList,
+    body_footer: 'Best regards,\nHoliday Management System',
+    logDescription: `Holiday end reminder sent - ${daysRemaining} days remaining`
+  });
+}
+
+/* ============================================================================
+   BATCH EMAIL SENDING FUNCTIONS
+   ============================================================================ */
+
+/**
+ * Send emails to multiple admins (for system notifications)
+ */
+function sendToMultipleAdmins(emailPartsTemplate, adminsList) {
+  try {
+    const results = {
+      success: true,
+      sent: 0,
+      failed: 0,
+      errors: []
+    };
+    
+    for (const admin of adminsList) {
+      const emailParts = { ...emailPartsTemplate };
+      emailParts.receiver = admin.email;
+      
+      // Replace admin name placeholder if exists
+      if (emailParts.body_greeting) {
+        emailParts.body_greeting = emailParts.body_greeting.replace('Administrator', admin.name || 'Administrator');
+      }
+      
+      const result = standardSendEmail(emailParts);
+      
+      if (result.success) {
+        results.sent++;
+      } else {
+        results.failed++;
+        results.errors.push({ email: admin.email, error: result.error });
+      }
+    }
+    
+    if (results.failed > 0) {
+      results.success = false;
+    }
+    
+    return results;
+    
+  } catch (error) {
+    console.error('Error in sendToMultipleAdmins:', error);
+    return {
+      success: false,
+      error: error.toString()
+    };
+  }
+}
+
+/**
+ * Send emails to multiple employees/recipients
+ */
+function sendToMultipleRecipients(emailPartsTemplate, recipientsList) {
+  try {
+    const results = {
+      success: true,
+      sent: 0,
+      failed: 0,
+      errors: []
+    };
+    
+    for (const recipient of recipientsList) {
+      const emailParts = { ...emailPartsTemplate };
+      emailParts.receiver = recipient.email;
+      
+      // Replace recipient name placeholder if exists
+      if (emailParts.body_greeting) {
+        emailParts.body_greeting = emailParts.body_greeting.replace('Team Member', recipient.name || 'Team Member');
+      }
+      
+      const result = standardSendEmail(emailParts);
+      
+      if (result.success) {
+        results.sent++;
+      } else {
+        results.failed++;
+        results.errors.push({ email: recipient.email, error: result.error });
+      }
+    }
+    
+    if (results.failed > 0) {
+      results.success = false;
+    }
+    
+    return results;
+    
+  } catch (error) {
+    console.error('Error in sendToMultipleRecipients:', error);
+    return {
+      success: false,
+      error: error.toString()
+    };
+  }
+}
+
+/* ============================================================================
+   WRAPPER FUNCTIONS FOR BACKWARD COMPATIBILITY
+   ============================================================================ */
+
+/**
+ * Send Leave Status Notification (determines type and calls appropriate function)
+ */
+function sendLeaveStatusNotification(statusData) {
+  const status = (statusData.status || '').toLowerCase();
+  
+  // Extract common string parameters
+  const employeeEmail = String(statusData.employeeEmail || '');
+  const employeeName = String(statusData.employeeName || '');
+  const leaveType = String(statusData.leaveType || '');
+  const startDate = statusData.startDate ? String(statusData.startDate) : '';
+  const endDate = statusData.endDate ? String(statusData.endDate) : '';
+  const duration = String(statusData.duration || '0');
+  const adminName = String(statusData.adminName || 'Administrator');
+  const adminComments = String(statusData.adminComments || '');
+  const actionDate = statusData.actionDate ? String(statusData.actionDate) : new Date().toISOString();
+  
+  if (status.includes('approved') && !status.includes('partial')) {
+    // Call sendLeaveApproved with string parameters
+    return sendLeaveApproved(
+      employeeEmail,
+      employeeName,
+      leaveType,
+      startDate,
+      endDate,
+      duration,
+      adminName,
+      adminComments,
+      actionDate
+    );
+  } else if (status.includes('rejected')) {
+    // Call sendLeaveRejected with string parameters
+    return sendLeaveRejected(
+      employeeEmail,
+      employeeName,
+      leaveType,
+      startDate,
+      endDate,
+      duration,
+      adminName,
+      adminComments,
+      actionDate
+    );
+  } else if (status.includes('partial')) {
+    // Extract additional parameters for partial approval
+    const approvedDates = String(statusData.approvedDates || '');
+    const rejectedDates = String(statusData.rejectedDates || '');
+    const approvedDuration = String(statusData.approvedDuration || '0');
+    const rejectedDuration = String(statusData.rejectedDuration || '0');
+    
+    // Call sendLeavePartiallyApproved with string parameters
+    return sendLeavePartiallyApproved(
+      employeeEmail,
+      employeeName,
+      leaveType,
+      startDate,
+      endDate,
+      approvedDates,
+      rejectedDates,
+      approvedDuration,
+      rejectedDuration,
+      adminName,
+      adminComments,
+      actionDate
+    );
+  }
+  
+  // Default to approved if status unclear
+  return sendLeaveApproved(
+    employeeEmail,
+    employeeName,
+    leaveType,
+    startDate,
+    endDate,
+    duration,
+    adminName,
+    adminComments,
+    actionDate
+  );
+}
+
+/* ============================================================================
+   HELPER FUNCTIONS
+   ============================================================================ */
+
+/**
+ * Format date for display (DD/MM/YYYY)
+ */
+function formatDateForDisplay(date) {
+  if (!date) return 'N/A';
+  
+  try {
+    const d = new Date(date);
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const year = d.getFullYear();
+    return `${day}/${month}/${year}`;
+  } catch (error) {
+    return 'Invalid Date';
+  }
+}
+
+/**
+ * Format date and time for display
+ */
+function formatDateTimeForDisplay(datetime) {
+  if (!datetime) return 'N/A';
+  
+  try {
+    const d = new Date(datetime);
+    return d.toLocaleString('en-US', { 
+      year: 'numeric',
+      month: 'short',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true
+    });
+  } catch (error) {
+    return 'Invalid DateTime';
+  }
+}
+
+/**
+ * Save email to history log
+ */
+function saveEmailHistory(receiverEmail, emailType, description, status, sender) {
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    let emailHistorySheet = ss.getSheetByName('Email history');
+    
+    // Create sheet if doesn't exist
+    if (!emailHistorySheet) {
+      emailHistorySheet = ss.insertSheet('Email history');
+      const headers = ['Sending date', 'Subject', 'sender', 'Receiver', 'Body (text)', 'Trigger (Auto, action)'];
+      emailHistorySheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+      
+      // Format header
+      const headerRange = emailHistorySheet.getRange(1, 1, 1, headers.length);
+      headerRange.setBackground('#2c3e50');
+      headerRange.setFontColor('#ffffff');
+      headerRange.setFontWeight('bold');
+    }
+    
+    // Determine trigger type
+    const trigger = sender === 'System' ? 'Auto' : 'Action';
+    
+    // Add new row
+    const newRow = [
+      new Date(),
+      emailType,
+      sender,
+      receiverEmail,
+      description,
+      trigger
+    ];
+    
+    emailHistorySheet.appendRow(newRow);
+    
+    return { success: true };
+    
+  } catch (error) {
+    console.error('Error logging email to history:', error);
+    return { success: false, error: error.toString() };
+  }
+}
+
+/**
+ * Get system URL from Config sheet
+ */
+function getSystemUrl() {
+  try {
+    const configSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Config');
+    if (!configSheet) return '#';
+    
+    const url = configSheet.getRange('B1').getValue();
+    return url || '#';
+  } catch (error) {
+    console.error('Error getting system URL:', error);
+    return '#';
+  }
+}
+
+/**
+ * Get notification admins (those with Receive Requests = TRUE)
+ */
+function getNotificationAdmins() {
+  try {
+    const adminsSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Admins');
+    if (!adminsSheet) return [];
+    
+    const data = adminsSheet.getDataRange().getValues();
+    const admins = [];
+    
+    for (let i = 1; i < data.length; i++) {
+      const receiveRequests = data[i][4]; // Column E - RECEIVE_REQUESTS
+      const status = data[i][8];           // Column I - STATUS
+      
+      // Check if admin has receive requests enabled AND is active
+      if ((receiveRequests === 'Yes' || receiveRequests === true) && 
+          status === 'active') {
+        admins.push({
+          email: data[i][1],  // Column B - EMAIL
+          name: data[i][0]    // Column A - NAME
+        });
+      }
+    }
+    
+    return admins;
+    
+  } catch (error) {
+    console.error('Error getting notification admins:', error);
+    return [];
+  }
+}
+
+/**
+ * Get full permission admins
+ */
+function getFullPermissionAdmins() {
+  try {
+    const adminsSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Admins');
+    if (!adminsSheet) return [];
+    
+    const data = adminsSheet.getDataRange().getValues();
+    const admins = [];
+    
+    for (let i = 1; i < data.length; i++) {
+      const fullPermission = data[i][2];  // Column C
+      const deactivatedOn = data[i][5];   // Column F
+      
+      if (fullPermission === true && !deactivatedOn) {
+        admins.push({
+          email: data[i][1],  // Column B
+          name: data[i][0]    // Column A
+        });
+      }
+    }
+    
+    return admins;
+    
+  } catch (error) {
+    console.error('Error getting full permission admins:', error);
+    return [];
+  }
+} 
+
+function getAdminNameByEmail(email) {
+  try {
+    if (!email || email === 'System') {
+      return 'System';
+    }
+    
+    const adminsSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Admins');
+    if (!adminsSheet) {
+      console.warn('Admins sheet not found, returning email');
+      return email;
+    }
+    
+    const data = adminsSheet.getDataRange().getValues();
+    
+    // Search for admin by email (Column B)
+    for (let i = 1; i < data.length; i++) {
+      const rowEmail = data[i][1]; // Column B - Email
+      
+      if (rowEmail && rowEmail.toString().toLowerCase() === email.toLowerCase()) {
+        const adminName = data[i][0]; // Column A - Name
+        return adminName || email;
+      }
+    }
+    
+    // If not found, return the email
+    console.warn('Admin not found for email:', email);
+    return email;
+    
+  } catch (error) {
+    console.error('Error getting admin name:', error);
+    return email;
+  }
+}
+
+function getEmployeeNameByEmail(email) {
+  try {
+    if (!email) {
+      return email;
+    }
+    
+    const employeesSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Employees');
+    if (!employeesSheet) {
+      console.warn('Employees sheet not found, returning email');
+      return email;
+    }
+    
+    const data = employeesSheet.getDataRange().getValues();
+    
+    // Search for employee by email (Column C)
+    for (let i = 1; i < data.length; i++) {
+      const rowEmail = data[i][2]; // Column C - Email
+      
+      if (rowEmail && rowEmail.toString().toLowerCase() === email.toLowerCase()) {
+        const employeeName = data[i][1]; // Column B - Name
+        return employeeName || email;
+      }
+    }
+    
+    // If not found, return the email
+    console.warn('Employee not found for email:', email);
+    return email;
+    
+  } catch (error) {
+    console.error('Error getting employee name:', error);
+    return email;
+  }
+}
+
+/**
+ * Get sender name (checks both Admin and Employee sheets)
+ * This is the main function that determines who sent the email
+ */
+function getSenderName(senderEmailOrName) {
+  try {
+    // If it's already 'System', return as-is
+    if (!senderEmailOrName || senderEmailOrName === 'System') {
+      return 'System';
+    }
+    
+    // If it doesn't look like an email, return as-is (already a name)
+    if (!senderEmailOrName.includes('@')) {
+      return senderEmailOrName;
+    }
+    
+    // It's an email - try to find the name
+    // First check Admins sheet
+    const adminName = getAdminNameByEmail(senderEmailOrName);
+    if (adminName !== senderEmailOrName) {
+      // Found in Admins sheet
+      return adminName;
+    }
+    
+    // If not found in Admins, check Employees sheet
+    const employeeName = getEmployeeNameByEmail(senderEmailOrName);
+    if (employeeName !== senderEmailOrName) {
+      // Found in Employees sheet
+      return employeeName;
+    }
+    
+    // Not found in either sheet, return the email
+    return senderEmailOrName;
+    
+  } catch (error) {
+    console.error('Error getting sender name:', error);
+    return senderEmailOrName;
+  }
+}
+
+/* ============================================================================
+   PASSWORD RESET EMAIL FUNCTIONS - STANDARDIZED
+   ============================================================================ */
+
+/**
+ * Send Password Reset PIN Email (for Forgot Password from homepage)
+ * @param {string} userEmail - User email address
+ * @param {string} userName - User name
+ * @param {string} pinCode - 6-digit PIN code
+ * @return {object} Result
+ */
+function sendPasswordResetPINEmail(userEmail, userName, pinCode) {
+  const pinCard = buildEmailCard(
+    'Your Password Reset PIN',
+    `Your verification PIN for password reset is:\n\n${pinCode}\n\nThis PIN will expire in 10 minutes.`,
+    'warning'
+  );
+  
+  return standardSendEmail({
+    receiver: userEmail,
+    subject: 'Password Reset Verification PIN',
+    subtitle: 'Security Verification',
+    emailType: 'Password Reset PIN',
+    actualSender: 'System',
+    body_greeting: `Hello ${userName},`,
+    body_intro: 'You have requested to reset your password. Please use the verification PIN below to proceed.',
+    body_content: pinCard,
+    body_securitytips: 'Never share this PIN with anyone. If you did not request this reset, please ignore this email.',
+    body_footer: 'Best regards,\nHoliday Management System',
+    logDescription: 'Password reset PIN sent'
+  });
+}
+
+/**
+ * Send Password Change Confirmation Email
+ * Used for self-password changes (logged in)
+ * @param {string} userEmail - User email address
+ * @param {string} userName - User name
+ * @return {object} Result
+ */
+function sendPasswordChangeConfirmationEmail(userEmail, userName) {
+  try {
+    console.log('Sending password change confirmation email to:', userEmail);
+    
+    const confirmationAlert = buildEmailAlert(
+      'Your password has been successfully changed. If you did not make this change, please contact your administrator immediately.',
+      'success'
+    );
+    
+    const timestamp = new Date().toLocaleString('en-US', { 
+      dateStyle: 'full', 
+      timeStyle: 'long' 
+    });
+    
+    return standardSendEmail({
+      receiver: userEmail,
+      subject: 'Password Successfully Changed',
+      subtitle: 'Security Confirmation',
+      emailType: 'Password Change Confirmation',
+      actualSender: 'System',
+      body_greeting: `Hello ${userName},`,
+      body_intro: 'This email confirms that your password was successfully changed.',
+      body_content: confirmationAlert + `<p style="color: #7f8c8d; margin-top: 20px;">Changed on: ${timestamp}</p>`,
+      body_securitytips: 'Always use a strong, unique password. Never reuse passwords from other accounts.',
+      body_footer: 'Best regards,\nHoliday Management System',
+      logDescription: 'Password change confirmation sent'
+    });
+    
+  } catch (error) {
+    console.error('Error sending password change confirmation email:', error);
+    return {
+      success: false,
+      error: 'Error sending confirmation email: ' + error.toString()
+    };
+  }
+}
+
+/**
+ * Send Employee Password Reset Email (Admin-triggered)
+ * @param {string} employeeName - Employee name
+ * @param {string} employeeEmail - Employee email address
+ * @param {string} employeeId - Employee ID
+ * @param {string} newPassword - New password
+ * @param {string} resetBy - Admin who reset the password
+ * @return {object} Result
+ */
+function sendEmployeePasswordResetEmail(employeeName, employeeEmail, employeeId, newPassword, resetBy) {
+  const credentials = buildCredentialsCard({
+    'Employee ID': employeeId,
+    'Email Address': employeeEmail,
+    'New Password': newPassword
+  });
+  
+  const configSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Config');
+  const systemUrl = configSheet ? configSheet.getRange('B1').getValue() : '#';
+  const loginButton = buildEmailButton('Access Employee Portal', systemUrl, 'primary');
+  
+  const importantNote = buildEmailAlert(
+    'Please change this password immediately after logging in for security purposes.',
+    'warning'
+  );
+  
+  return standardSendEmail({
+    receiver: employeeEmail,
+    subject: 'Your Password Has Been Reset',
+    subtitle: 'Password Reset Notification',
+    emailType: 'Employee Password Reset',
+    actualSender: resetBy,
+    body_greeting: `Hello ${employeeName},`,
+    body_intro: `Your password has been reset by ${resetBy}. Please use your new credentials below to access the system.`,
+    body_content: credentials + importantNote + loginButton,
+    body_securitytips: 'Change your password immediately after login. Never share your credentials with anyone.',
+    body_footer: 'Best regards,\nHoliday Management System',
+    logDescription: `Password reset email sent to employee ${employeeName}`
+  });
+}
+
+/**
+ * Send Admin Password Reset Email (Admin-triggered)
+ * @param {string} adminEmail - Admin email address
+ * @param {string} adminName - Admin name
+ * @param {string} newPassword - New password
+ * @param {string} resetBy - Admin who reset the password
+ * @return {object} Result
+ */
+function sendAdminPasswordResetEmail(adminEmail, adminName, newPassword, resetBy) {
+  const credentials = buildCredentialsCard({
+    'Email Address': adminEmail,
+    'New Password': newPassword
+  });
+  
+  const configSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Config');
+  const systemUrl = configSheet ? configSheet.getRange('B1').getValue() : '#';
+  const loginButton = buildEmailButton('Access Admin Portal', systemUrl, 'primary');
+  
+  const importantNote = buildEmailAlert(
+    'Please change this password immediately after logging in for security purposes.',
+    'warning'
+  );
+  
+  return standardSendEmail({
+    receiver: adminEmail,
+    subject: 'Your Admin Password Has Been Reset',
+    subtitle: 'Password Reset Notification',
+    emailType: 'Admin Password Reset',
+    actualSender: resetBy,
+    body_greeting: `Hello ${adminName},`,
+    body_intro: `Your administrator password has been reset by ${resetBy}. Please use your new credentials below to access the system.`,
+    body_content: credentials + importantNote + loginButton,
+    body_securitytips: 'Change your password immediately after login. Never share your credentials with anyone.',
+    body_footer: 'Best regards,\nHoliday Management System',
+    logDescription: `Password reset email sent to admin ${adminName}`
+  });
+}
+
+/**
+ * Format array of dates - consecutive as range, scattered with line breaks
+ * ADD this helper function to email-sender.gs
+ */
+function formatDatesArray(datesArray) {
+  if (!datesArray || datesArray.length === 0) {
+    return 'N/A';
+  }
+  
+  // Convert to Date objects and sort chronologically
+  const sortedDates = datesArray
+    .map(d => {
+      // Handle if already formatted or raw date
+      try {
+        return new Date(d);
+      } catch (e) {
+        console.error('Error parsing date:', d);
+        return null;
+      }
+    })
+    .filter(d => d !== null && !isNaN(d.getTime()))
+    .sort((a, b) => a - b);
+  
+  if (sortedDates.length === 0) {
+    return 'N/A';
+  }
+  
+  // Get weekday abbreviation
+  const getWeekday = (date) => {
+    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    return days[date.getDay()];
+  };
+  
+  // Format date with weekday
+  const formatWithWeekday = (date) => {
+    return `${getWeekday(date)}, ${formatDateForDisplay(date)}`;
+  };
+  
+  // Check if all dates are consecutive
+  let isConsecutive = true;
+  for (let i = 1; i < sortedDates.length; i++) {
+    const dayDiff = Math.round((sortedDates[i] - sortedDates[i-1]) / (1000 * 60 * 60 * 24));
+    if (dayDiff !== 1) {
+      isConsecutive = false;
+      break;
+    }
+  }
+  
+  if (isConsecutive && sortedDates.length > 1) {
+    // Format as range: "Mon, 01/10/2025 to Fri, 05/10/2025"
+    return `${formatWithWeekday(sortedDates[0])} to ${formatWithWeekday(sortedDates[sortedDates.length - 1])}`;
+  } else if (sortedDates.length === 1) {
+    // Single date
+    return formatWithWeekday(sortedDates[0]);
+  } else {
+    // Format with line breaks for scattered dates
+    return sortedDates.map(d => formatWithWeekday(d)).join('<br>');
+  }
+}
+
+/**
+ * Format dates with weekly holiday count
+ * Returns object with formatted dates and holiday info
+ */
+function formatDatesWithHolidayInfo(daysArray) {
+  if (!daysArray || daysArray.length === 0) {
+    return {
+      datesFormatted: 'N/A',
+      holidayCount: 0,
+      netCount: 0
+    };
+  }
+  
+  // Extract date strings
+  const dateStrings = daysArray.map(d => String(d.date));
+  
+  // Count weekly holidays
+  const holidayCount = daysArray.filter(d => d.isWeeklyHoliday).length;
+  const netCount = daysArray.length - holidayCount;
+  
+  // Format dates
+  let datesFormatted = formatDatesArray(dateStrings);
+  
+  // Add holiday count on new line if any
+  if (holidayCount > 0) {
+    datesFormatted += `<br><span style="font-size: 0.9em; color: #7f8c8d; font-style: italic;">(${holidayCount} weekly holiday${holidayCount > 1 ? 's' : ''})</span>`;
+  }
+  
+  return {
+    datesFormatted: datesFormatted,
+    holidayCount: holidayCount,
+    netCount: netCount
+  };
+}
