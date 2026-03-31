@@ -1,0 +1,2444 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Holiday Management System</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <?!= include('styles'); ?>
+  <?!= include('employee-styles'); ?>
+</head>
+
+<body>
+  <!-- Toast Container -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <!-- HOMEPAGE CONTAINER -->
+  <div id="homepage-container" class="homepage-container">
+    <div class="homepage-content">
+
+      <!-- Company Header -->
+      <div class="company-header">
+        <img src="https://lh3.googleusercontent.com/d/11aw_4PB1m6dN-uvKFgtzgji400gqUd1C" alt="Company Logo" class="company-logo">
+        <h1 class="company-title">
+          <i class="fas fa-calendar-check"></i>
+          Holiday Management System
+        </h1>
+        <p class="company-subtitle">Streamline your leave management process</p>
+      </div>
+
+      <!-- Login Cards Container -->
+      <div class="login-cards-container">
+
+        <!-- Employee Login Card -->
+        <div class="login-card employee-card">
+          <div class="card-header">
+            <i class="fas fa-users card-icon"></i>
+            <h2>Employee Portal</h2>
+            <p>Manage your leave requests and view balance</p>
+          </div>
+          <div class="card-body">
+            <div class="form-group">
+              <label class="form-label">
+                <i class="fas fa-envelope"></i>
+                Select Your Email
+              </label>
+              <select class="form-input login-select" id="employeeEmailSelect">
+                <option value="">Loading employees...</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">
+                <i class="fas fa-lock"></i>
+                Password
+              </label>
+              <input type="password" class="form-input" id="employeePassword" placeholder="Enter your password" autocomplete="off">
+            </div>
+            <div class="card-actions">
+              <button class="btn-primary login-btn" onclick="handleEmployeeLogin()">
+                <i class="fas fa-sign-in-alt"></i> Login
+              </button>
+              <button class="btn-secondary forgot-btn" onclick="handleForgotPassword('employee')">
+                <i class="fas fa-key"></i> Forgot Password
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Admin Login Card -->
+        <div class="login-card admin-card">
+          <div class="card-header">
+            <i class="fas fa-user-shield card-icon"></i>
+            <h2>Admin Portal</h2>
+            <p>Manage employees & holidays settings</p>
+          </div>
+          <div class="card-body">
+            <div class="form-group">
+              <label class="form-label">
+                <i class="fas fa-envelope"></i>
+                Select Your Email
+              </label>
+              <select class="form-input login-select" id="adminEmailSelect">
+                <option value="">Loading administrators...</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">
+                <i class="fas fa-lock"></i>
+                Password
+              </label>
+              <input type="password" class="form-input" id="adminPassword" placeholder="Enter your password" autocomplete="off">
+            </div>
+          </div>
+          <div class="card-actions">
+            <button class="btn-primary login-btn" onclick="handleAdminLogin()">
+                <i class="fas fa-sign-in-alt"></i> Login
+              </button>
+            <button class="btn-secondary forgot-btn" onclick="handleForgotPassword('admin')">
+                <i class="fas fa-key"></i> Forgot Password
+              </button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Homepage Footer -->
+    <div class="homepage-footer">
+      <p>&copy; 2025 Holiday Management System. All rights reserved.</p>
+    </div>
+
+  </div>
+
+  <!-- EMPLOYEE PORTAL CONTAINER - REPLACE EXISTING EMPLOYEE PORTAL SECTION -->
+  <div id="employee-portal-container" class="employee-portal-container" style="display: none;">
+    <div class="employee-dashboard-container">
+
+      <!-- Employee Portal Header -->
+      <div class="employee-portal-header">
+        <!-- Left Side - Welcome Greeting with Logo -->
+        <div class="employee-welcome">
+          <img src="https://lh3.googleusercontent.com/d/11aw_4PB1m6dN-uvKFgtzgji400gqUd1C" alt="Company Logo" class="employee-header-logo">
+          <div class="employee-title">
+            <div class="employee-panel-title">
+              <i class="fas fa-user"></i>
+              Employee Portal
+            </div>
+            <div class="employee-welcome-subtitle">
+              Welcome Employee <i class="fas fa-user-circle"></i>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Side - Action Buttons -->
+        <div class="employee-header-actions">
+          <button class="emp-header-calendar-btn" onclick="openEmployeeCalendar()" title="Team Calendar">
+            <i class="fas fa-calendar-alt"></i>
+            <span>Calendar</span>
+          </button>
+          <button class="employee-header-btn" id="employee-password-btn" onclick="openPasswordModal()">
+            <i class="fas fa-key"></i>
+            Change Password
+          </button>
+          <button
+            class="ep-refresh-btn"
+            id="ep-refresh-btn"
+            onclick="handleEPRefresh()"
+            title="Refresh"
+            aria-label="Refresh current tab">
+            <i class="fas fa-sync-alt ep-refresh-icon" id="ep-refresh-icon"></i>
+          </button>
+          <button class="employee-logout-btn" id="employee-logout-btn" onclick="handleEmployeeLogout()">
+            <i class="fas fa-sign-out-alt"></i>
+            Logout
+          </button>
+        </div>
+      </div>
+
+      <!-- Employee Portal Tab Container -->
+      <div class="employee-tab-container">
+
+        <!-- Employee Tab Navigation -->
+        <div class="employee-tab-nav">
+          <button class="employee-tab-button active" data-tab="leave-requests">
+            <i class="fas fa-calendar-check"></i>
+            Leave Requests
+          </button>
+          <!-- WEEKLY HOLIDAY TAB BUTTON -->
+          <button class="employee-tab-button" data-tab="weekly-holidays">
+            <i class="fas fa-calendar-week"></i>
+            <span>Weekly Holiday</span>
+          </button>
+          <button class="employee-tab-button" data-tab="official-holidays">
+            <i class="fas fa-calendar-alt"></i>
+            Official Holidays
+          </button>
+          <button class="employee-tab-button" data-tab="history">
+            <i class="fas fa-history"></i>
+            History
+          </button>
+        </div>
+
+        <!-- Employee Tab Content -->
+        <div class="employee-tab-content">
+
+          <!-- Leave Requests Tab -->
+          <div class="employee-tab-pane active" id="employee-leave-requests">
+            <div class="employee-tab-placeholder">
+              <i class="fas fa-calendar-check"></i>
+              <h3>Leave Requests</h3>
+              <p>Submit and manage your leave requests. View your available balance and request new leaves.</p>
+            </div>
+          </div>
+
+          <!-- WEEKLY HOLIDAY TAB PANE -->
+          <div id="employee-weekly-holidays" class="employee-tab-pane">
+            <div class="emp-wh-tab-header">
+              <h2>
+                <i class="fas fa-calendar-week"></i> Weekly Holiday Calendar
+              </h2>
+              <p class="emp-wh-tab-description">
+                View weekly holidays for all employees. Your holidays are highlighted at the top.
+              </p>
+            </div>
+
+            <div class="emp-wh-tab-actions">
+              <button onclick="refreshWeeklyHolidayCalendar()" class="btn-secondary">
+                <i class="fas fa-sync-alt"></i> Refresh
+              </button>
+            </div>
+
+            <div id="empWeeklyHolidayCalendarContainer" class="emp-wh-main-container">
+              <!-- Calendar will be dynamically loaded here -->
+            </div>
+          </div>
+
+          <!-- Official Holidays Tab -->
+          <div id="employee-official-holidays" class="employee-tab-pane">
+            <div id="ep-official-holidays-content">
+              <!-- Content will be loaded dynamically by EP_loadOfficialHolidaysTab() -->
+            </div>
+          </div>
+
+          <!-- History Tab -->
+          <div class="employee-tab-pane" id="employee-history">
+            <div class="employee-tab-placeholder">
+              <i class="fas fa-history"></i>
+              <h3>History</h3>
+              <p>Review your leave history, approved requests, and past applications.</p>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- EMPLOYEE MODALS - CONTAINED WITHIN EMPLOYEE PORTAL -->
+
+      <!-- Calendar Modal -->
+      <!-- ============================================================================
+        EMPLOYEE PORTAL CALENDAR - HTML STRUCTURE
+        Add to: index.html (inside employee portal container, after header)
+        Unique prefix: emp-cal-
+        ============================================================================ -->
+
+      <!-- Employee Calendar Modal (Full Screen Overlay) -->
+      <div class="emp-cal-modal-overlay" id="emp-cal-modal-overlay" style="display: none;">
+        <div class="emp-cal-modal-container">
+
+          <!-- Calendar Header -->
+          <div class="emp-cal-header">
+            <div class="emp-cal-header-left">
+              <h2><i class="fas fa-calendar-alt"></i> Team Calendar</h2>
+            </div>
+            <div class="emp-cal-header-right">
+              <button class="emp-cal-close-btn" onclick="closeEmployeeCalendar()">
+                <i class="fas fa-times"></i> Close
+              </button>
+            </div>
+          </div>
+
+          <!-- Loading State -->
+          <div class="emp-cal-loading" id="emp-cal-loading" style="display: flex;">
+            <i class="fas fa-spinner fa-spin fa-3x"></i>
+            <p>Loading calendar...</p>
+          </div>
+
+          <!-- Calendar Container -->
+          <div class="emp-cal-container" id="emp-cal-container" style="display: none;">
+
+            <!-- Calendar Legend -->
+            <div class="cal-legend">
+              <div class="cal-legend-title">
+                <i class="fas fa-info-circle"></i> Legend
+              </div>
+              <div class="cal-legend-items">
+                <div class="cal-legend-item">
+                  <div class="cal-legend-box cal-legend-today"></div>
+                  <span>Today</span>
+                </div>
+                <div class="cal-legend-item">
+                  <div class="cal-legend-box cal-legend-official-holiday"></div>
+                  <span>Official Holiday</span>
+                </div>
+                <div class="cal-legend-separator"></div>
+                <div class="cal-legend-item">
+                  <i class="fas fa-user-check" style="color: #27ae60; font-size: 1.2em;"></i>
+                  <span>Working</span>
+                </div>
+                <div class="cal-legend-item">
+                  <i class="fas fa-check-circle" style="color: #155724; font-size: 1.2em;"></i>
+                  <span>Approved Leaves</span>
+                </div>
+                <div class="cal-legend-item">
+                  <i class="fas fa-clock" style="color: #856404; font-size: 1.2em;"></i>
+                  <span>Pending Requests</span>
+                </div>
+                <div class="cal-legend-item">
+                  <i class="fas fa-calendar-week" style="color: #6c2c91; font-size: 1.2em;"></i>
+                  <span>Weekly Holiday</span>
+                </div>
+                <div class="cal-legend-item">
+                  <i class="fas fa-star" style="color: #f39c12; font-size: 1.2em;"></i>
+                  <span>Official Holiday Off</span>
+                </div>
+                <div class="cal-legend-separator"></div>
+                <div class="cal-legend-item">
+                  <i class="fas fa-plane-departure cal-icon-annual"></i>
+                  <span>Annual Leave</span>
+                </div>
+                <div class="cal-legend-item">
+                  <i class="fas fa-user-md cal-icon-sick"></i>
+                  <span>Sick Leave</span>
+                </div>
+                <div class="cal-legend-item">
+                  <i class="fas fa-exclamation-triangle cal-icon-emergency"></i>
+                  <span>Emergency Leave</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Filters Section -->
+            <div class="emp-cal-filters">
+              <div class="emp-cal-filter-group">
+                <label><i class="fas fa-user"></i> Employee</label>
+                <select id="emp-cal-filter-employee" onchange="empCalApplyFilters()">
+                  <option value="all">All Employees</option>
+                </select>
+              </div>
+
+              <div class="emp-cal-filter-group">
+                <label><i class="fas fa-tag"></i> Leave Type</label>
+                <select id="emp-cal-filter-leave-type" onchange="empCalApplyFilters()">
+                  <option value="all">All Types</option>
+                  <option value="annual">Annual Leave</option>
+                  <option value="sick">Sick Leave</option>
+                  <option value="emergency">Emergency Leave</option>
+                </select>
+              </div>
+
+              <div class="emp-cal-filter-group">
+                <label><i class="fas fa-filter"></i> Status</label>
+                <select id="emp-cal-filter-status" onchange="empCalApplyFilters()">
+                  <option value="all">All Status</option>
+                  <option value="approved">Approved</option>
+                  <option value="pending">Pending</option>
+                  <option value="rejected">Rejected</option>
+                </select>
+              </div>
+
+              <button class="emp-cal-clear-filters-btn" onclick="empCalClearFilters()">
+                <i class="fas fa-eraser"></i> Clear Filters
+              </button>
+            </div>
+
+            <!-- Calendar Grid -->
+            <div class="emp-cal-grid-container">
+
+              <!-- Month Navigator -->
+              <div class="emp-cal-month-navigator">
+                <button class="emp-cal-nav-btn" id="emp-cal-prev-month" onclick="empCalChangeMonth(-1)">
+                  <i class="fas fa-chevron-left"></i>
+                </button>
+                <h2 class="emp-cal-month-year" id="emp-cal-month-year">January 2025</h2>
+                <button class="emp-cal-nav-btn" id="emp-cal-next-month" onclick="empCalChangeMonth(1)">
+                  <i class="fas fa-chevron-right"></i>
+                </button>
+                <button class="emp-cal-today-btn" id="emp-cal-today-btn" onclick="empCalGoToToday()">
+                  <i class="fas fa-calendar-day"></i> Today
+                </button>
+              </div>
+
+              <!-- Week Day Headers -->
+              <div class="emp-cal-weekdays">
+                <div class="emp-cal-weekday">Sun</div>
+                <div class="emp-cal-weekday">Mon</div>
+                <div class="emp-cal-weekday">Tue</div>
+                <div class="emp-cal-weekday">Wed</div>
+                <div class="emp-cal-weekday">Thu</div>
+                <div class="emp-cal-weekday">Fri</div>
+                <div class="emp-cal-weekday">Sat</div>
+              </div>
+
+              <!-- Calendar Days Grid -->
+              <div class="emp-cal-days-grid" id="emp-cal-days-grid">
+                <!-- Days populated by JavaScript -->
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Day Details Modal -->
+      <div class="emp-cal-day-modal-overlay" id="emp-cal-day-modal" style="display: none;">
+        <div class="emp-cal-day-modal">
+          <div class="emp-cal-day-modal-header">
+            <h3 id="emp-cal-day-modal-title">Day Details</h3>
+            <button class="emp-cal-day-modal-close" onclick="empCalCloseDayModal()">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+          <div class="emp-cal-day-modal-body" id="emp-cal-day-modal-body">
+            <!-- Content populated by JavaScript -->
+          </div>
+          <div class="emp-cal-day-modal-footer">
+            <button class="btn-secondary" onclick="empCalCloseDayModal()">
+              <i class="fas fa-times"></i> Close
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Change Password Modal -->
+      <div class="employee-modal-overlay" id="employee-password-modal" style="display: none;">
+        <div class="employee-modal">
+          <div class="employee-modal-header">
+            <div class="employee-modal-title">
+              <i class="fas fa-key"></i>
+              Change Password
+            </div>
+            <button class="employee-modal-close" onclick="closeEmployeeModal('employee-password-modal')">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+
+          <div class="employee-modal-body">
+            <form id="employee-password-form">
+              <div class="employee-form-group">
+                <label class="employee-form-label" for="current-password">
+                  <i class="fas fa-lock"></i>
+                  Current Password *
+                </label>
+                <input type="password"
+                      class="employee-form-input"
+                      id="current-password"
+                      placeholder="Enter your current password"
+                      required>
+              </div>
+
+              <div class="employee-form-group">
+                <label class="employee-form-label" for="new-password">
+                  <i class="fas fa-key"></i>
+                  New Password *
+                </label>
+                <input type="password"
+                      class="employee-form-input"
+                      id="new-password"
+                      placeholder="Enter new password (min 4 characters)"
+                      minlength="4"
+                      required>
+              </div>
+
+              <div class="employee-form-group">
+                <label class="employee-form-label" for="confirm-password">
+                  <i class="fas fa-check"></i>
+                  Confirm New Password *
+                </label>
+                <input type="password"
+                      class="employee-form-input"
+                      id="confirm-password"
+                      placeholder="Re-enter new password"
+                      minlength="4"
+                      required>
+              </div>
+
+              <div class="employee-info-box">
+                <i class="fas fa-info-circle"></i>
+                <span>Password must be at least 4 characters. A confirmation email will be sent.</span>
+              </div>
+            </form>
+          </div>
+
+          <div class="employee-modal-footer">
+            <button class="employee-btn employee-btn-secondary"
+                    onclick="closeEmployeeModal('employee-password-modal')">
+              <i class="fas fa-times"></i>
+              Cancel
+            </button>
+            <button class="employee-btn employee-btn-primary"
+                    id="employee-password-submit"
+                    onclick="handleEmployeePasswordChange()">
+              <i class="fas fa-check"></i>
+              Change Password
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Enhanced Add Request Form (Initially Hidden) -->
+      <div id="EP-add-request-form" class="EP-add-request-form" style="display: none;">
+        <div class="EP-add-request-card">
+
+          <!-- Form Header -->
+          <div class="EP-form-header">
+            <div class="EP-header-content">
+              <h3 class="EP-form-title">
+                <i class="fas fa-plus-circle"></i>
+                Add New Leave Request
+              </h3>
+              <div class="EP-form-subtitle">Fill in the details for your leave request</div>
+            </div>
+            <button class="EP-close-btn" onclick="EP_hideAddRequestForm()">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+
+          <!-- Form Status Indicator -->
+          <div class="EP-form-status"></div>
+
+          <!-- Form Content -->
+          <div class="EP-form-content">
+
+            <!-- Leave Type Selection -->
+            <div class="EP-form-field EP-leave-type-selection">
+              <label class="EP-form-label">
+                <i class="fas fa-list-alt"></i>
+                Leave Type
+                <span class="EP-required">*</span>
+              </label>
+              <div class="EP-leave-type-buttons">
+                <button type="button" class="EP-leave-type-btn" data-type="annual" onclick="EP_selectLeaveType('annual')">
+                  <div class="EP-btn-icon">
+                    <i class="fas fa-calendar-day"></i>
+                  </div>
+                  <div class="EP-btn-content">
+                    <div class="EP-btn-title">Annual</div>
+                    <div class="EP-btn-desc">Vacation leave</div>
+                  </div>
+                </button>
+                <button type="button" class="EP-leave-type-btn" data-type="sick" onclick="EP_selectLeaveType('sick')">
+                  <div class="EP-btn-icon">
+                    <i class="fas fa-user-md"></i>
+                  </div>
+                  <div class="EP-btn-content">
+                    <div class="EP-btn-title">Sick</div>
+                    <div class="EP-btn-desc">Medical leave</div>
+                  </div>
+                </button>
+                <button type="button" class="EP-leave-type-btn" data-type="emergency" onclick="EP_selectLeaveType('emergency')">
+                  <div class="EP-btn-icon">
+                    <i class="fas fa-exclamation-triangle"></i>
+                  </div>
+                  <div class="EP-btn-content">
+                    <div class="EP-btn-title">Emergency</div>
+                    <div class="EP-btn-desc">Urgent leave</div>
+                  </div>
+                </button>
+              </div>
+            </div>
+
+            <!-- Date Selection -->
+            <div class="EP-form-field EP-date-selection">
+              <label class="EP-form-label">
+                <i class="fas fa-calendar-alt"></i>
+                Date Range
+                <span class="EP-required">*</span>
+              </label>
+
+              <!-- Calendar Picker Button -->
+              <button type="button"
+                      class="EP-calendar-picker-btn"
+                      onclick="LRDS_openFromForm()"
+                      style="display: none;">
+                <i class="fas fa-calendar-alt"></i>
+                Use TEAM Calendar Picker
+              </button>
+
+              <div class="EP-date-inputs-container">
+                <div class="EP-date-input-group">
+                  <label class="EP-date-label">Start Date</label>
+                  <input type="date"
+                        class="EP-form-input EP-date-input"
+                        id="EP-start-date"
+                        onchange="EP_validateForm()">
+                </div>
+                <div class="EP-date-separator">
+                  <i class="fas fa-arrow-right"></i>
+                </div>
+                <div class="EP-date-input-group">
+                  <label class="EP-date-label">End Date</label>
+                  <input type="date"
+                        class="EP-form-input EP-date-input"
+                        id="EP-end-date"
+                        onchange="EP_validateForm()">
+                </div>
+              </div>
+            </div>
+
+            <!-- Reason -->
+            <div class="EP-form-field EP-reason-section">
+              <label class="EP-form-label" for="EP-leave-reason">
+                <i class="fas fa-comment-alt"></i>
+                Reason for Leave
+                <span class="EP-required">*</span>
+              </label>
+              <textarea class="EP-form-input EP-reason-textarea"
+                        id="EP-leave-reason"
+                        rows="4"
+                        maxlength="500"
+                        placeholder="Please provide a detailed reason for your leave request..."
+                        oninput="EP_validateForm()"></textarea>
+              <div class="EP-field-help">
+                <i class="fas fa-info-circle"></i>
+                Minimum 5 characters, maximum 500 characters
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Form Actions -->
+          <div class="EP-form-actions">
+            <button type="button"
+                    class="employee-btn EP-btn-secondary EP-cancel-btn"
+                    onclick="EP_hideAddRequestForm()">
+              <i class="fas fa-times"></i>
+              Cancel
+            </button>
+            <button type="button"
+                    class="employee-btn EP-btn-primary EP-submit-btn"
+                    id="EP-submit-request-btn"
+                    onclick="EP_submitLeaveRequest()"
+                    disabled>
+              <i class="fas fa-paper-plane"></i>
+              Submit Request
+            </button>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ============================================================================
+          LEAVE REQUEST DATE SELECTOR (LRDS) - HTML STRUCTURE
+          Location: index.html (after EP-add-request-form)
+          Prefix: LRDS-*
+          ============================================================================ -->
+
+      <!-- Date Selector Calendar Modal -->
+      <div class="LRDS-modal-overlay" id="LRDS-modal-overlay" style="display: none;">
+        <div class="LRDS-modal-container">
+
+          <!-- Header -->
+          <div class="LRDS-header">
+            <div class="LRDS-header-left">
+              <h2>
+                <i class="fas fa-calendar-check"></i>
+                Select Leave Dates
+              </h2>
+              <p class="LRDS-leave-type-indicator" id="LRDS-leave-type-indicator">
+                <!-- Dynamically filled -->
+              </p>
+            </div>
+            <div class="LRDS-header-right">
+              <button class="LRDS-close-btn" onclick="LRDS_closeCalendar()">
+                  <i class="fas fa-times"></i> Close
+                </button>
+            </div>
+          </div>
+
+          <!-- Loading State -->
+          <div class="LRDS-loading" id="LRDS-loading" style="display: none;">
+            <i class="fas fa-spinner fa-spin"></i>
+            <p>Loading calendar...</p>
+          </div>
+
+          <!-- Main Content -->
+          <div class="LRDS-content" id="LRDS-content">
+
+            <!-- Selection Info Panel -->
+            <div class="LRDS-selection-panel">
+              <div class="LRDS-selection-info">
+                <div class="LRDS-info-item">
+                  <label>Start Date:</label>
+                  <span id="LRDS-start-display">Not selected</span>
+                </div>
+                <div class="LRDS-info-item">
+                  <label>End Date:</label>
+                  <span id="LRDS-end-display">Not selected</span>
+                </div>
+                <div class="LRDS-info-item">
+                  <label>Duration:</label>
+                  <span id="LRDS-duration-display">0 days</span>
+                </div>
+              </div>
+              <button class="LRDS-clear-selection-btn"
+                        id="LRDS-clear-btn"
+                        onclick="LRDS_clearSelection()"
+                        style="display: none;">
+                  <i class="fas fa-times-circle"></i> Clear Selection
+                </button>
+            </div>
+
+            <!-- Legend -->
+            <div class="LRDS-legend">
+              <div class="LRDS-legend-item">
+                <div class="LRDS-legend-box LRDS-legend-today"></div>
+                <span>Today</span>
+              </div>
+              <div class="LRDS-legend-item">
+                <div class="LRDS-legend-box LRDS-legend-selected"></div>
+                <span>Selected</span>
+              </div>
+              <div class="LRDS-legend-item">
+                <div class="LRDS-legend-box LRDS-legend-disabled"></div>
+                <span>Unavailable</span>
+              </div>
+              <div class="LRDS-legend-item">
+                <div class="LRDS-legend-box LRDS-legend-blocked"></div>
+                <span>Blocked (Overlap/Holiday)</span>
+              </div>
+              <div class="LRDS-legend-item">
+                <div class="LRDS-legend-box LRDS-legend-weekly"></div>
+                <span>Weekly Holiday</span>
+              </div>
+            </div>
+
+            <!-- Navigation -->
+            <div class="LRDS-navigation">
+              <button class="LRDS-nav-btn" id="LRDS-prev-month" onclick="LRDS_changeMonth(-1)">
+                  <i class="fas fa-chevron-left"></i>
+                </button>
+              <h3 class="LRDS-month-year" id="LRDS-month-year">January 2025</h3>
+              <button class="LRDS-nav-btn" id="LRDS-next-month" onclick="LRDS_changeMonth(1)">
+                  <i class="fas fa-chevron-right"></i>
+                </button>
+              <button class="LRDS-today-btn" onclick="LRDS_goToToday()">
+                  <i class="fas fa-calendar-day"></i> Today
+                </button>
+            </div>
+
+            <!-- Week Headers -->
+            <div class="LRDS-weekdays">
+              <div class="LRDS-weekday">Sun</div>
+              <div class="LRDS-weekday">Mon</div>
+              <div class="LRDS-weekday">Tue</div>
+              <div class="LRDS-weekday">Wed</div>
+              <div class="LRDS-weekday">Thu</div>
+              <div class="LRDS-weekday">Fri</div>
+              <div class="LRDS-weekday">Sat</div>
+            </div>
+
+            <!-- Calendar Grid -->
+            <div class="LRDS-calendar-grid" id="LRDS-calendar-grid">
+              <!-- Days populated by JavaScript -->
+            </div>
+
+          </div>
+
+          <!-- Footer Actions -->
+          <div class="LRDS-footer">
+            <button class="employee-btn employee-btn-secondary" onclick="LRDS_closeCalendar()">
+                <i class="fas fa-times"></i> Cancel
+              </button>
+            <button class="employee-btn employee-btn-primary"
+                      id="LRDS-apply-btn"
+                      onclick="LRDS_applySelection()"
+                      disabled>
+                <i class="fas fa-check"></i> Apply Selection
+              </button>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+  <!-- ADMIN PORTAL CONTAINER -->
+  <div id="admin-portal-container" class="admin-portal-container" style="display: none;">
+    <div class="dashboard-container">
+
+      <!-- Dashboard Header -->
+      <div class="dashboard-header">
+        <h1 id="headerTitle">
+          <img src="https://lh3.googleusercontent.com/d/11aw_4PB1m6dN-uvKFgtzgji400gqUd1C" alt="Company Logo" class="header-logo">
+          <i class="fas fa-user-tie"></i> Administrator Panel
+        </h1>
+        <button class="btn-secondary" onclick="logout()">
+          <i class="fas fa-sign-out-alt"></i> Logout
+        </button>
+      </div>
+
+      <!-- Main Tab Container -->
+      <div class="tab-container">
+
+        <!-- Main Tab Navigation -->
+        <div class="tab-nav">
+          <button class="tab-button active" data-tab="employees">
+            <i class="fas fa-users"></i> Manage Employees
+          </button>
+          <button class="tab-button" data-tab="leave-requests">
+            <i class="fas fa-calendar-check"></i> Leave Requests
+          </button>
+          <button class="tab-button" data-tab="holidays">
+            <i class="fas fa-calendar-week"></i> Weekly & Official Holidays
+          </button>
+          <button class="tab-button" data-tab="settings">
+            <i class="fas fa-cog"></i> Settings
+          </button>
+        </div>
+
+        <!-- Tab Content -->
+        <div class="tab-content">
+
+          <!-- EMPLOYEES TAB -->
+          <div id="employees" class="tab-pane active">
+            <div class="section-header">
+              <h2><i class="fas fa-users"></i> Manage Employees</h2>
+            </div>
+
+            <!-- Employees Table Container -->
+            <div class="table-container">
+              <div id="employeesTable">
+                <!-- Employees table will be populated by JavaScript -->
+              </div>
+              <div id="employeesTableEmpty" class="empty-state" style="display: none;">
+                <i class="fas fa-users"></i>
+                <p>No employees found</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Leave Requests Tab Content -->
+          <!-- LEAVE REQUESTS TAB - COMPLETE RESTRUCTURE -->
+          <div id="leave-requests" class="tab-pane">
+            <div class="section-header">
+              <h2><i class="fas fa-calendar-check"></i> Leave Requests Management</h2>
+              <p class="section-description">Review and respond to employee leave requests with day-by-day control</p>
+            </div>
+
+            <!-- Sub-tabs Container -->
+            <div class="leave-sub-tab-container">
+              <div class="leave-sub-tab-nav">
+                <button class="leave-sub-tab-button active" data-subtab="respond-requests">
+                  <i class="fas fa-reply"></i> Respond to Requests
+                </button>
+                <button class="leave-sub-tab-button" data-subtab="calendar">
+                  <i class="fas fa-calendar"></i> Calendar
+                </button>
+              </div>
+
+              <!-- Sub-tab Content -->
+              <div class="leave-sub-tab-content">
+
+                <!-- Respond to Requests Sub-tab -->
+                <div id="respond-requests" class="leave-sub-tab-pane active">
+
+                  <!-- Loading State -->
+                  <div id="lrRespondLoadingContainer" class="lr-respond-loading" style="display: none;">
+                    <div class="lr-respond-spinner"></div>
+                    <p class="lr-respond-loading-text">Loading leave requests...</p>
+                  </div>
+
+                  <!-- Dashboard Cards -->
+                  <div class="leave-dashboard-section">
+                    <h3><i class="fas fa-chart-bar"></i> Overview & Filters</h3>
+                    <div id="leaveRequestDashboardCards" class="leave-dashboard-cards">
+                      <!-- Dashboard cards will be populated by JavaScript -->
+                    </div>
+                  </div>
+
+                  <!-- Filter Info -->
+                  <div class="filter-info-new">
+                    <p><i class="fas fa-info-circle"></i> Click on the cards above to filter requests by leave type.
+                      Pending requests show with orange badges.</p>
+                  </div>
+
+                  <!-- Leave Requests Cards Container -->
+                  <div id="leaveRequestsCardsContainer" class="leave-requests-cards-container">
+                    <!-- Large interactive cards will be populated by JavaScript -->
+                  </div>
+
+                </div>
+
+                <!-- Location: Admin Portal → Leave Requests Tab → Calendar Sub-tab -->
+
+                <div id="calendar" class="leave-sub-tab-pane">
+
+                  <!-- Calendar Loading State -->
+                  <div id="cal-loading" class="cal-loading-state" style="display: none;">
+                    <i class="fas fa-spinner fa-spin fa-3x"></i>
+                    <p>Loading calendar...</p>
+                  </div>
+
+                  <!-- Calendar Container -->
+                  <div id="cal-container" class="cal-container">
+
+                    <!-- Calendar Header (Refresh Button Only) -->
+                    <div class="cal-header">
+                      <div class="cal-header-title">
+                        <h2><i class="fas fa-calendar-alt"></i> Leave Calendar</h2>
+                      </div>
+                      <div class="cal-header-right">
+                        <button class="cal-refresh-btn" id="cal-refresh-btn" title="Refresh Calendar">
+                          <i class="fas fa-sync-alt"></i> Refresh
+                        </button>
+                      </div>
+                    </div>
+
+                    <!-- Calendar Legend -->
+                    <div class="cal-legend">
+                      <div class="cal-legend-title">
+                        <i class="fas fa-info-circle"></i> Legend
+                      </div>
+                      <div class="cal-legend-items">
+                        <div class="cal-legend-item">
+                          <div class="cal-legend-box cal-legend-today"></div>
+                          <span>Today</span>
+                        </div>
+                        <div class="cal-legend-item">
+                          <div class="cal-legend-box cal-legend-official-holiday"></div>
+                          <span>Official Holiday</span>
+                        </div>
+                        <div class="cal-legend-separator"></div>
+                        <div class="cal-legend-item">
+                          <i class="fas fa-user-check" style="color: #27ae60; font-size: 1.2em;"></i>
+                          <span>Working</span>
+                        </div>
+                        <div class="cal-legend-item">
+                          <i class="fas fa-check-circle" style="color: #155724; font-size: 1.2em;"></i>
+                          <span>Approved Leaves</span>
+                        </div>
+                        <div class="cal-legend-item">
+                          <i class="fas fa-clock" style="color: #856404; font-size: 1.2em;"></i>
+                          <span>Pending Requests</span>
+                        </div>
+                        <div class="cal-legend-item">
+                          <i class="fas fa-calendar-week" style="color: #6c2c91; font-size: 1.2em;"></i>
+                          <span>Weekly Holiday</span>
+                        </div>
+                        <div class="cal-legend-item">
+                          <i class="fas fa-star" style="color: #f39c12; font-size: 1.2em;"></i>
+                          <span>Official Holiday Off</span>
+                        </div>
+                        <div class="cal-legend-separator"></div>
+                        <div class="cal-legend-item">
+                          <i class="fas fa-plane-departure cal-icon-annual"></i>
+                          <span>Annual Leave</span>
+                        </div>
+                        <div class="cal-legend-item">
+                          <i class="fas fa-user-md cal-icon-sick"></i>
+                          <span>Sick Leave</span>
+                        </div>
+                        <div class="cal-legend-item">
+                          <i class="fas fa-exclamation-triangle cal-icon-emergency"></i>
+                          <span>Emergency Leave</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Calendar Filters -->
+                    <div class="cal-filters">
+                      <div class="cal-filter-group">
+                        <label><i class="fas fa-filter"></i> Filter by:</label>
+                        <select id="cal-filter-employee" class="cal-filter-select">
+                          <option value="all">All Employees</option>
+                          <!-- Options populated by JavaScript -->
+                        </select>
+                        <select id="cal-filter-leave-type" class="cal-filter-select">
+                          <option value="all">All Leave Types</option>
+                          <option value="annual">Annual Leave</option>
+                          <option value="sick">Sick Leave</option>
+                          <option value="emergency">Emergency Leave</option>
+                          <option value="weekly">Weekly Holiday</option>
+                          <option value="official">Official Holiday</option>
+                        </select>
+                        <select id="cal-filter-status" class="cal-filter-select">
+                          <option value="all">All Statuses</option>
+                          <option value="approved">Approved</option>
+                          <option value="rejected">Rejected</option>
+                          <option value="pending">Pending</option>
+                        </select>
+                        <button class="cal-clear-filters-btn" id="cal-clear-filters">
+                          <i class="fas fa-eraser"></i> Clear Filters
+                        </button>
+                      </div>
+                    </div>
+
+                    <!-- Calendar Grid -->
+                    <div class="cal-grid-container">
+
+                      <!-- Month Navigator (Above Week Days) -->
+                      <div class="cal-month-navigator">
+                        <button class="cal-nav-btn" id="cal-prev-month" title="Previous Month">
+                          <i class="fas fa-chevron-left"></i>
+                        </button>
+                        <h2 class="cal-month-year" id="cal-month-year">January 2025</h2>
+                        <button class="cal-nav-btn" id="cal-next-month" title="Next Month">
+                          <i class="fas fa-chevron-right"></i>
+                        </button>
+                        <button class="cal-today-btn" id="cal-today-btn">
+                          <i class="fas fa-calendar-day"></i> Today
+                        </button>
+                      </div>
+
+                      <!-- Week Day Headers -->
+                      <div class="cal-weekdays">
+                        <div class="cal-weekday">Sun</div>
+                        <div class="cal-weekday">Mon</div>
+                        <div class="cal-weekday">Tue</div>
+                        <div class="cal-weekday">Wed</div>
+                        <div class="cal-weekday">Thu</div>
+                        <div class="cal-weekday">Fri</div>
+                        <div class="cal-weekday">Sat</div>
+                      </div>
+
+                      <!-- Calendar Days Grid -->
+                      <div class="cal-days-grid" id="cal-days-grid">
+                        <!-- Days will be populated by JavaScript -->
+                      </div>
+                    </div>
+
+                  </div>
+
+                </div>
+
+                <!-- Calendar Day Modal -->
+                <div class="cal-modal-overlay" id="cal-day-modal" style="display: none;">
+                  <div class="cal-modal">
+                    <div class="cal-modal-header">
+                      <h3 id="cal-modal-title">Day Details</h3>
+                      <button class="cal-modal-close" id="cal-modal-close">
+                        <i class="fas fa-times"></i>
+                      </button>
+                    </div>
+
+                    <div class="cal-modal-body" id="cal-modal-body">
+                      <!-- Content populated by JavaScript -->
+                    </div>
+
+                    <div class="cal-modal-footer">
+                      <button class="btn-secondary" id="cal-modal-close-btn">
+                        <i class="fas fa-times"></i> Close
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- HOLIDAYS TAB -->
+          <div id="holidays" class="tab-pane">
+            <div class="section-header">
+              <h2><i class="fas fa-calendar-alt"></i> Weekly & Official Holidays</h2>
+              <div class="section-actions">
+                <button class="btn-secondary config-btn" onclick="navigateToLeavesHolidays()" title="Go to Settings">
+                  <i class="fas fa-cog"></i> Configuration
+                </button>
+              </div>
+            </div>
+
+            <!-- Sub-tabs for Holiday Management -->
+            <div class="sub-tab-container">
+              <div class="sub-tab-nav">
+                <button class="sub-tab-button" data-subtab="weekly-holidays">
+                  <i class="fas fa-calendar-week"></i> Weekly Holidays
+                </button>
+                <button class="sub-tab-button active" data-subtab="official-holidays">
+                  <i class="fas fa-calendar-check"></i> Official Holidays
+                </button>
+              </div>
+
+              <!-- Sub-tab Content -->
+              <div class="sub-tab-content">
+
+                <!-- WEEKLY HOLIDAYS SUBTAB -->
+                <div id="weekly-holidays" class="sub-tab-pane">
+                  <div class="section-header">
+                    <h3><i class="fas fa-calendar-week"></i> Weekly Holidays Management</h3>
+                    <p class="section-description">
+                      Manage employee weekly holiday periods. Each employee must have a standard period,
+                      and can have temporary periods for schedule changes.
+                    </p>
+                  </div>
+
+                  <!-- Helper Card -->
+                  <div id="standardHolidayHelperCard" class="helper-card-container" style="display: none;">
+                    <div class="standard-holiday-helper-card">
+                      <div class="helper-card-icon">
+                        <i id="helperCardIcon" class="fas fa-calendar-check"></i>
+                      </div>
+                      <div class="helper-card-content">
+                        <div class="helper-card-title" id="helperCardTitle">Standard Weekly Holiday Status</div>
+                        <div class="helper-card-message" id="helperCardMessage">Checking active employees...</div>
+                      </div>
+                      <div class="helper-card-badge">
+                        <span id="helperCardCount">-</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Weekly Holidays Table -->
+                  <div id="weeklyHolidaysTable" class="table-container">
+                    <!-- Weekly holidays table will be loaded here -->
+                  </div>
+                </div>
+
+                <!-- OFFICIAL HOLIDAYS SUBTAB - UPDATED FOR CARD INTERFACE -->
+                <div id="official-holidays" class="sub-tab-pane active">
+                  <div class="section-header">
+                    <h3><i class="fas fa-calendar-check"></i> Official Holidays Management</h3>
+                    <p class="section-description">
+                      Manage official holidays and assign employees to work during holidays.
+                      Employees assigned to work will receive automatic compensation.
+                      Use the toggle buttons to assign employees and checkboxes to manage notifications.
+                    </p>
+                  </div>
+
+                  <!-- Loading Spinner -->
+                  <div class="loading-spinner" id="officialHolidaysLoading" style="display: none;">
+                    <i class="fas fa-spinner fa-spin"></i> Loading official holidays...
+                  </div>
+
+                  <!-- Holidays Cards Container - UPDATED STRUCTURE -->
+                  <div id="officialHolidaysTable" class="oh-cards-main-container">
+                    <!-- Holiday cards will be loaded here by JavaScript -->
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- SETTINGS TAB -->
+          <div id="settings" class="tab-pane">
+
+            <!-- Settings Sub-tab Container -->
+            <div class="sub-tab-container">
+
+              <!-- Settings Sub-tab Navigation -->
+              <div class="sub-tab-nav">
+                <button class="sub-tab-button" data-subtab="admin-users">
+                  <i class="fas fa-user-shield"></i> Admin Users
+                </button>
+                <button class="sub-tab-button" data-subtab="leaves-holidays">
+                  <i class="fas fa-calendar-check"></i> Leaves & Holidays
+                </button>
+                <button class="sub-tab-button" data-subtab="email-settings">
+                  <i class="fas fa-envelope"></i> E-mail Settings
+                </button>
+                <button class="sub-tab-button active" data-subtab="advanced">
+                  <i class="fas fa-tools"></i> Advanced
+                </button>
+              </div>
+
+              <!-- Settings Sub-tab Content -->
+              <div class="sub-tab-content">
+
+                <!-- ADMIN USERS SUB-TAB -->
+                <div id="admin-users" class="sub-tab-pane">
+                  <div class="section-header">
+                    <h3><i class="fas fa-user-shield"></i> Admin Users Management</h3>
+                  </div>
+
+                  <!-- Section 1: Change My Password - COLLAPSIBLE -->
+                  <div class="settings-section au-collapsible-section">
+                    <div class="au-collapsible-header" onclick="togglePasswordSection()">
+                      <div class="au-collapsible-title">
+                        <i class="fas fa-shield-alt"></i>
+                        <h4>Change My Password</h4>
+                      </div>
+                      <i class="fas fa-chevron-down au-collapsible-icon" id="passwordSectionIcon"></i>
+                    </div>
+
+                    <div class="au-collapsible-content" id="passwordSectionContent" style="display: none;">
+                      <p class="au-section-description">Update your administrator password securely</p>
+
+                      <form id="adminPasswordChangeForm" class="password-change-form">
+                        <div class="form-group">
+                          <label class="form-label">
+                          <i class="fas fa-lock"></i>
+                          Current Password *
+                        </label>
+                          <input type="password"
+                              class="form-input"
+                              id="currentPassword"
+                              placeholder="Enter your current password"
+                              required>
+                        </div>
+
+                        <div class="form-group">
+                          <label class="form-label">
+                          <i class="fas fa-key"></i>
+                          New Password *
+                        </label>
+                          <input type="password"
+                              class="form-input"
+                              id="newPassword"
+                              placeholder="Enter new password (min 4 characters)"
+                              minlength="4"
+                              required>
+                        </div>
+
+                        <div class="form-group">
+                          <label class="form-label">
+                          <i class="fas fa-check"></i>
+                          Confirm New Password *
+                        </label>
+                          <input type="password"
+                              class="form-input"
+                              id="confirmPassword"
+                              placeholder="Re-enter new password"
+                              minlength="4"
+                              required>
+                        </div>
+
+                        <div class="form-actions">
+                          <button type="button"
+                                class="btn-primary"
+                                onclick="handleAdminPasswordChange()">
+                          <i class="fas fa-shield-alt"></i> Change Password
+                        </button>
+                        </div>
+
+                        <div class="info-box">
+                          <i class="fas fa-info-circle"></i>
+                          <div>
+                            <strong>Password Requirements:</strong>
+                            <ul>
+                              <li>Minimum 4 characters</li>
+                              <li>Keep your password secure and confidential</li>
+                              <li>A confirmation email will be sent after successful change</li>
+                            </ul>
+                          </div>
+                        </div>
+                      </form>
+                    </div>
+                  </div>
+
+                  <!-- Section 2: Manage Admins - STYLED CONSISTENTLY -->
+                  <div class="settings-section" id="manageAdminsSection">
+                    <div class="section-title-with-action">
+                      <div>
+                        <h4><i class="fas fa-users-cog"></i> Manage Administrators</h4>
+                        <p class="au-section-description">View and manage administrator accounts and permissions</p>
+                      </div>
+                      <button type="button" class="btn-primary" onclick="showAddAdminForm()" id="addAdminBtn">
+                      <i class="fas fa-user-plus"></i> Add New Admin
+                    </button>
+                    </div>
+
+                    <!-- Icon Legend -->
+                    <div class="au-icon-legend">
+                      <h5><i class="fas fa-info-circle"></i> Table Icons Legend</h5>
+                      <div class="au-legend-items">
+                        <div class="au-legend-item">
+                          <i class="fas fa-crown" style="color: #f39c12;"></i>
+                          <span>Full Permission</span>
+                        </div>
+                        <div class="au-legend-item">
+                          <i class="fas fa-user-shield" style="color: #95a5a6;"></i>
+                          <span>Limited Permission</span>
+                        </div>
+                        <div class="au-legend-item">
+                          <i class="fas fa-bell" style="color: #3498db;"></i>
+                          <span>Receives Notifications</span>
+                        </div>
+                        <div class="au-legend-item">
+                          <i class="fas fa-bell-slash" style="color: #95a5a6;"></i>
+                          <span>No Notifications</span>
+                        </div>
+                        <div class="au-legend-item">
+                          <i class="fas fa-edit" style="color: #3498db;"></i>
+                          <span>Edit Admin</span>
+                        </div>
+                        <div class="au-legend-item">
+                          <i class="fas fa-user-times" style="color: #e74c3c;"></i>
+                          <span>Deactivate</span>
+                        </div>
+                        <div class="au-legend-item">
+                          <i class="fas fa-user-check" style="color: #27ae60;"></i>
+                          <span>Activate</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Table Container -->
+                    <div class="table-container">
+                      <div class="au-table-loading-overlay" id="auTableLoadingOverlay">
+                        <div class="au-loading-spinner">
+                          <i class="fas fa-spinner"></i>
+                          <span class="au-loading-text">Processing...</span>
+                        </div>
+                      </div>
+                      <table class="admins-table">
+                        <thead>
+                          <tr>
+                            <th><i class="fas fa-user"></i> Admin Name</th>
+                            <th><i class="fas fa-envelope"></i> Email</th>
+                            <th><i class="fas fa-crown"></i> Full Permission</th>
+                            <th><i class="fas fa-bell"></i> Receive Requests</th>
+                            <th><i class="fas fa-calendar-plus"></i> Date Created</th>
+                            <th><i class="fas fa-calendar"></i> Last Login</th>
+                            <th><i class="fas fa-toggle-on"></i> Status</th>
+                            <th><i class="fas fa-cogs"></i> Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody id="adminsTableBody">
+                          <!-- Dynamic content will be populated here -->
+                        </tbody>
+                      </table>
+
+                      <div class="loading-state" id="adminsTableLoading">
+                        <i class="fas fa-spinner fa-spin"></i> Loading administrators...
+                      </div>
+
+                      <div class="empty-state" id="adminsTableEmpty" style="display: none;">
+                        <i class="fas fa-users"></i>
+                        <p>No administrators found</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Access Denied Message -->
+                  <div class="access-denied-section" id="accessDeniedSection" style="display: none;">
+                    <div class="access-denied-message">
+                      <i class="fas fa-lock"></i>
+                      <h4>Access Restricted</h4>
+                      <p>You need <strong>Full Permission</strong> to manage other administrators.</p>
+                      <p>Contact your system administrator if you need access to this feature.</p>
+                    </div>
+                  </div>
+                </div>
+                <!-- LEAVES & HOLIDAYS SUB-TAB -->
+                <div id="leaves-holidays" class="sub-tab-pane">
+                  <div class="section-header">
+                    <h3><i class="fas fa-calendar-check"></i> Leaves & Holidays Settings</h3>
+                  </div>
+
+                  <!-- Leave Default Balances Section -->
+                  <div class="settings-section">
+                    <h4><i class="fas fa-balance-scale"></i> Default Opening Balances</h4>
+                    <p class="section-description">Set default leave balances for new employees. These values are
+                      preserved during system reset.</p>
+
+                    <div class="leave-balance-cards">
+                      <!-- Annual Leaves Card -->
+                      <div class="balance-card annual-leave-card">
+                        <div class="balance-card-header">
+                          <div class="balance-icon annual-icon">
+                            <i class="fas fa-calendar-week"></i>
+                          </div>
+                          <div class="balance-info">
+                            <h5>Annual Leaves</h5>
+                            <small>Vacation and personal time off</small>
+                          </div>
+                        </div>
+                        <div class="balance-input-group">
+                          <input type="number" class="balance-input" id="annualLeavesDefault" min="0" max="365">
+                          <span class="balance-unit">days</span>
+                        </div>
+                      </div>
+
+                      <!-- Sick Leaves Card -->
+                      <div class="balance-card sick-leave-card">
+                        <div class="balance-card-header">
+                          <div class="balance-icon sick-icon">
+                            <i class="fas fa-user-md"></i>
+                          </div>
+                          <div class="balance-info">
+                            <h5>Sick Leaves</h5>
+                            <small>Medical and health-related leave</small>
+                          </div>
+                        </div>
+                        <div class="balance-input-group">
+                          <input type="number" class="balance-input" id="sickLeavesDefault" min="0" max="365">
+                          <span class="balance-unit">days</span>
+                        </div>
+                      </div>
+
+                      <!-- Emergency Leaves Card -->
+                      <div class="balance-card emergency-leave-card">
+                        <div class="balance-card-header">
+                          <div class="balance-icon emergency-icon">
+                            <i class="fas fa-exclamation-triangle"></i>
+                          </div>
+                          <div class="balance-info">
+                            <h5>Emergency Leaves</h5>
+                            <small>Urgent and unforeseen situations</small>
+                          </div>
+                        </div>
+                        <div class="balance-input-group">
+                          <input type="number" class="balance-input" id="emergencyLeavesDefault" min="0" max="365">
+                          <span class="balance-unit">days</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="balance-actions">
+                      <button class="btn-success" id="saveLeaveDefaultsBtn" onclick="saveLeaveDefaults()">
+                        <i class="fas fa-save"></i> Save Leave Defaults
+                      </button>
+                      <button class="btn-secondary" onclick="resetLeaveDefaults()">
+                        <i class="fas fa-undo"></i> Reset to System Defaults
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- Official Holidays Section -->
+                  <div class="settings-section">
+                    <h4><i class="fas fa-calendar-star"></i> Official Holidays Management</h4>
+
+                    <!-- Compensation Setting -->
+                    <div class="compensation-setting">
+                      <div class="compensation-card">
+                        <div class="compensation-header">
+                          <div class="compensation-icon">
+                            <i class="fas fa-coins"></i>
+                          </div>
+                          <div class="compensation-info">
+                            <h5>Holiday Work Compensation</h5>
+                            <small>Days added when employees work on official holidays</small>
+                          </div>
+                        </div>
+                        <div class="compensation-input-group">
+                          <input type="number" class="compensation-input" id="holidayCompensationDefault" min="0" max="10">
+                          <span class="compensation-unit">days</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Add New Holiday Form -->
+                    <div class="holiday-form-section">
+                      <h5><i class="fas fa-plus-circle"></i> Add New Official Holiday</h5>
+
+                      <div class="holiday-form">
+                        <div class="form-row">
+                          <div class="form-group">
+                            <label class="form-label">
+                              <i class="fas fa-tag"></i>
+                              Holiday Name
+                            </label>
+                            <input type="text" class="form-input" id="holidayName" placeholder="e.g., New Year's Day, Christmas" maxlength="100">
+                          </div>
+                        </div>
+
+                        <div class="form-row">
+                          <div class="form-group">
+                            <label class="form-label">
+                              <i class="fas fa-calendar"></i>
+                              Start Date
+                            </label>
+                            <input type="date" class="form-input" id="holidayStartDate">
+                          </div>
+                          <div class="form-group">
+                            <label class="form-label">
+                              <i class="fas fa-calendar-check"></i>
+                              End Date
+                            </label>
+                            <input type="date" class="form-input" id="holidayEndDate">
+                          </div>
+                        </div>
+
+                        <div class="holiday-form-actions">
+                          <button class="btn-primary" id="addHolidayBtn" onclick="addNewHoliday()">
+                            <i class="fas fa-plus"></i> Add Holiday
+                          </button>
+                          <button class="btn-secondary" onclick="clearHolidayForm()">
+                            <i class="fas fa-times"></i> Clear Form
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Existing Holidays Table -->
+                    <div class="holidays-table-section">
+                      <div class="table-header">
+                        <h5><i class="fas fa-list"></i> Existing Official Holidays</h5>
+                        <button class="btn-secondary btn-small" onclick="refreshHolidaysList()">
+                          <i class="fas fa-sync-alt"></i> Refresh
+                        </button>
+                      </div>
+
+                      <div class="holidays-table-container">
+                        <div id="holidaysTableLoading" class="loading-spinner">
+                          <i class="fas fa-spinner fa-spin"></i> Loading holidays...
+                        </div>
+                        <div id="holidaysTable"></div>
+                      </div>
+                    </div>
+
+                    <!-- Save All Changes -->
+                    <div class="holidays-actions">
+                      <button class="btn-success" id="saveAllHolidaySettingsBtn" onclick="saveAllHolidaySettings()">
+                        <i class="fas fa-save"></i> Save All Holiday Settings
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- EMAIL SETTINGS SUB-TAB -->
+                <div id="email-settings" class="sub-tab-pane">
+                  <div class="section-header">
+                    <h3><i class="fas fa-envelope"></i> E-mail Settings</h3>
+                  </div>
+
+                  <!-- Email Automation Settings -->
+                  <div class="settings-section">
+                    <h4><i class="fas fa-paper-plane"></i> Email Sender Configuration</h4>
+
+                    <div class="settings-item">
+                      <label class="settings-label">
+                        <i class="fas fa-paper-plane"></i>
+                        Sending Email Address
+                      </label>
+                      <div class="sender-email-wrapper">
+                        <select class="form-input sender-email-select" id="senderEmailSelect">
+                          <option value="">Loading available email addresses...</option>
+                        </select>
+                        <div class="sender-refresh-btn">
+                          <button type="button" class="btn-small btn-secondary" onclick="refreshSenderEmails()" id="refreshSenderBtn">
+                            <i class="fas fa-sync-alt"></i>
+                          </button>
+                        </div>
+                      </div>
+                      <small class="help-text">Select the email address to use as sender for all system emails. If none selected, your primary email will be used.</small>
+
+                      <div class="sender-preview" id="senderPreview" style="display: none;">
+                        <div class="preview-label">
+                          <i class="fas fa-eye"></i>
+                          Email Preview:
+                        </div>
+                        <div class="preview-content">
+                          From: <span id="previewFromName">Holiday Management System</span>
+                          &lt;<span id="previewFromEmail">example@company.com</span>&gt;
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="settings-section">
+                    <h4><i class="fas fa-clock"></i> Automated Email Schedule</h4>
+
+                    <div class="settings-item">
+                      <label class="settings-label">
+                        <i class="fas fa-clock"></i>
+                        Time of Day for Auto Reminders
+                      </label>
+                      <input type="time" class="form-input" id="autoReminderTime">
+                      <small class="help-text">Set the daily time when automated email reminders will be sent</small>
+                    </div>
+                  </div>
+
+                  <!-- Holiday Notifications -->
+                  <div class="settings-section">
+                    <h4><i class="fas fa-calendar-alt"></i> Holiday Notifications</h4>
+
+                    <div class="settings-item">
+                      <label class="settings-label">
+                        <i class="fas fa-bullhorn"></i>
+                        Announcement Before Official Holidays
+                      </label>
+                      <div class="input-with-unit">
+                        <input type="number" class="form-input" id="holidayAnnouncementDays" min="0" max="30">
+                        <span class="input-unit">days before</span>
+                      </div>
+                      <small class="help-text">Send holiday announcements X days before official holidays</small>
+                    </div>
+
+                    <div class="settings-item">
+                      <label class="settings-label">
+                        <i class="fas fa-gift"></i>
+                        Holiday Wishes for Annual Leaves
+                      </label>
+                      <div class="toggle-row">
+                        <label class="toggle-switch">
+                          <input type="checkbox" id="holidayWishesToggle" onchange="toggleHolidayWishes()">
+                          <span class="toggle-slider"></span>
+                        </label>
+                        <span class="toggle-label">Send holiday wishes to employees on annual leave</span>
+                      </div>
+                      <div class="conditional-setting" id="holidayWishesSettings">
+                        <div class="input-with-unit">
+                          <input type="number" class="form-input" id="holidayWishesDays" min="0" max="30">
+                          <span class="input-unit">days after leave starts</span>
+                        </div>
+                        <small class="help-text">Send wishes X days after annual leave begins</small>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Compensation Settings -->
+                  <div class="settings-section">
+                    <h4><i class="fas fa-balance-scale"></i> Compensation Management</h4>
+
+                    <div class="settings-item">
+                      <label class="settings-label">
+                        <i class="fas fa-coins"></i>
+                        Auto Compensation Notifications
+                      </label>
+                      <div class="input-with-unit" id="compensationTimingGroup">
+                        <input type="number" class="form-input" id="autoCompensationDays" min="0" max="30">
+                        <span class="input-unit">days relative to start date</span>
+                      </div>
+                      <div class="dependency-warning" id="compensationWarning">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <span>Auto compensation is disabled because no default compensation value is set. Configure this in Leaves & Holidays settings first.</span>
+                      </div>
+                      <small class="help-text">Send compensation emails when employees work on official holidays</small>
+                    </div>
+                  </div>
+
+                  <!-- Leave End Reminders -->
+                  <div class="settings-section">
+                    <h4><i class="fas fa-calendar-times"></i> Leave End Reminders</h4>
+
+                    <div class="settings-item">
+                      <label class="settings-label">
+                        <i class="fas fa-bell"></i>
+                        Holiday End Reminders
+                      </label>
+                      <div class="toggle-row">
+                        <label class="toggle-switch">
+                          <input type="checkbox" id="holidayEndToggle" onchange="toggleHolidayEndReminders()">
+                          <span class="toggle-slider"></span>
+                        </label>
+                        <span class="toggle-label">Send reminders before annual leave ends</span>
+                      </div>
+                      <div class="conditional-setting" id="holidayEndSettings">
+                        <div class="input-with-unit">
+                          <input type="number" class="form-input" id="holidayEndDays" min="1" max="30">
+                          <span class="input-unit">days before leave ends</span>
+                        </div>
+                        <small class="help-text">Send reminders X days before annual leave ends</small>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Save Button -->
+                  <div class="settings-actions">
+                    <button class="btn-success" id="saveEmailSettingsBtn" onclick="saveEmailSettings()">
+                      <i class="fas fa-save"></i> Save E-mail Settings
+                    </button>
+                    <button class="btn-secondary" onclick="resetEmailSettings()">
+                      <i class="fas fa-undo"></i> Reset to Defaults
+                    </button>
+                  </div>
+                </div>
+
+                <div id="advanced" class="sub-tab-pane active">
+                  <div class="section-header">
+                    <h3><i class="fas fa-tools"></i> Advanced Settings</h3>
+                  </div>
+
+                  <div class="permission-warning">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <span><strong>Full Permission Required:</strong> Only administrators with full permissions can modify these settings.</span>
+                  </div>
+
+                  <div class="system-reset-card">
+                    <div class="system-info-header">
+                      <h4><i class="fas fa-database"></i> Current System Period</h4>
+                    </div>
+
+                    <div class="system-dates">
+                      <div class="date-display disabled">
+                        <div class="date-label">System Start Date</div>
+                        <div class="date-value" id="currentStartDate">Loading...</div>
+                      </div>
+                      <div class="date-display disabled">
+                        <div class="date-label">System End Date</div>
+                        <div class="date-value" id="currentEndDate">Loading...</div>
+                      </div>
+                    </div>
+
+                    <div style="text-align: center; margin-top: 15px;">
+                      <button class="system-reset-btn" id="systemResetBtn" onclick="newSR_openModal()">
+                        <i class="fas fa-shield-alt"></i>
+                        System Reset
+                      </button>
+                    </div>
+                  </div>
+
+                  <div class="settings-section" style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 20px; border-left: 4px solid #3498db;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                      <div>
+                        <h3 style="margin: 0 0 5px 0; color: #2c3e50; font-size: 1.1rem;">
+                          <i class="fas fa-history" style="color: #3498db; margin-right: 8px;"></i> System Version History
+                        </h3>
+                        <p style="margin: 0; color: #7f8c8d; font-size: 0.9rem;">
+                          Access read-only archives of previous system years/periods.
+                        </p>
+                      </div>
+                      <button class="btn-info" onclick="openSystemVersionsModal()" style="background-color: #3498db; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer;">
+                        <i class="fas fa-external-link-alt"></i> View Archives
+                      </button>
+                    </div>
+                  </div>
+
+                  <div class="notification-card">
+                    <h4><i class="fas fa-bell"></i> End Date Notification Preferences</h4>
+
+                    <div class="preference-row">
+                      <span class="preference-label">Notify me before system end date</span>
+                      <label class="toggle-switch">
+                        <input type="checkbox" id="notificationToggle" onchange="toggleNotificationDays()">
+                        <span class="toggle-slider"></span>
+                      </label>
+                    </div>
+
+                    <div class="days-input-group" id="daysInputGroup">
+                      <span>Send reminder</span>
+                      <input type="number" class="days-input" id="reminderDays" min="1" max="30" value="7" disabled>
+                      <span>days before system end date</span>
+                    </div>
+
+                    <button class="btn-success" id="savePreferencesBtn" onclick="saveNotificationPreferences()">
+                      <i class="fas fa-save"></i> Save Preferences
+                    </button>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- MODALS SECTION -->
+
+  <!-- Forgot Password Modal -->
+  <div id="forgotPasswordModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3><i class="fas fa-key"></i> Reset Password</h3>
+      </div>
+      <div class="modal-body">
+        <p>A verification PIN has been sent to your email address. Please enter the PIN and your new password below:</p>
+
+        <div class="form-group">
+          <label class="form-label">6-Digit PIN Code</label>
+          <input type="text" class="form-input" id="resetPinInput" placeholder="Enter PIN" maxlength="6" style="text-align: center; font-size: 1.2rem; letter-spacing: 2px;">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">New Password</label>
+          <input type="password" class="form-input" id="newPassword" placeholder="Enter new password">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Confirm New Password</label>
+          <input type="password" class="form-input" id="confirmPassword" placeholder="Confirm new password">
+        </div>
+
+        <div class="warning-text">
+          <i class="fas fa-clock"></i>
+          <span>PIN expires in 10 minutes</span>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" onclick="closeForgotPasswordModal()">
+          <i class="fas fa-times"></i> Cancel
+        </button>
+        <button class="btn-primary" id="resetPasswordBtn" onclick="resetPasswordWithPIN()">
+          <i class="fas fa-check"></i> Reset Password
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Employee Modal -->
+  <div id="addEmployeeModal" class="modal-overlay" style="display: none;">
+    <div class="modal-container" style="max-width: 600px;">
+      <div class="modal-header">
+        <h3><i class="fas fa-user-plus"></i> Add New Employee</h3>
+        <button class="modal-close" onclick="closeAddEmployeeModal()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <form id="addEmployeeForm">
+          <!-- Employee Information Section -->
+          <div class="form-section">
+            <h4><i class="fas fa-user"></i> Employee Information</h4>
+
+            <div class="form-group">
+              <label for="employeeName">Full Name *</label>
+              <input type="text" id="employeeName" name="employeeName" required placeholder="Enter employee's full name">
+            </div>
+
+            <div class="form-group">
+              <label for="employeeEmail">Email Address *</label>
+              <input type="email" id="employeeEmail" name="employeeEmail" required placeholder="employee@company.com" onblur="validateEmailUniqueness()">
+              <div id="emailValidationMsg" class="validation-message"></div>
+            </div>
+
+            <div class="form-group">
+              <label><i class="fas fa-calendar-week"></i> Weekly Holiday *</label>
+              <div class="holiday-toggle-container">
+                <button type="button" class="holiday-toggle" data-day="friday" onclick="toggleHolidayDay(this)">
+                  <i class="fas fa-calendar-day"></i> Friday
+                </button>
+                <button type="button" class="holiday-toggle" data-day="saturday" onclick="toggleHolidayDay(this)">
+                  <i class="fas fa-calendar-day"></i> Saturday
+                </button>
+                <button type="button" class="holiday-toggle" data-day="sunday" onclick="toggleHolidayDay(this)">
+                  <i class="fas fa-calendar-day"></i> Sunday
+                </button>
+                <button type="button" class="holiday-toggle" data-day="monday" onclick="toggleHolidayDay(this)">
+                  <i class="fas fa-calendar-day"></i> Monday
+                </button>
+                <button type="button" class="holiday-toggle" data-day="tuesday" onclick="toggleHolidayDay(this)">
+                  <i class="fas fa-calendar-day"></i> Tuesday
+                </button>
+                <button type="button" class="holiday-toggle" data-day="wednesday" onclick="toggleHolidayDay(this)">
+                  <i class="fas fa-calendar-day"></i> Wednesday
+                </button>
+                <button type="button" class="holiday-toggle" data-day="thursday" onclick="toggleHolidayDay(this)">
+                  <i class="fas fa-calendar-day"></i> Thursday
+                </button>
+              </div>
+              <div id="holidayValidationMsg" class="validation-message"></div>
+            </div>
+          </div>
+
+          <!-- Annual Leave Entitlement Section -->
+          <div class="form-section">
+            <h4><i class="fas fa-calendar-check"></i> Annual Leave Entitlement</h4>
+
+            <div class="form-row">
+              <div class="form-group half-width">
+                <label for="usableFrom">Usable From *</label>
+                <input type="date" class="form-input" id="usableFrom" name="usableFrom" required>
+              </div>
+              <div class="form-group half-width">
+                <label for="usableTo">Usable To *</label>
+                <input type="date" class="form-input" id="usableTo" name="usableTo" required>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group third-width">
+                <label for="annualDays">Annual Days</label>
+                <input type="number" id="annualDays" name="annualDays" min="0" max="50">
+              </div>
+              <div class="form-group third-width">
+                <label for="emergencyDays">Emergency Days</label>
+                <input type="number" id="emergencyDays" name="emergencyDays" min="0" max="20">
+              </div>
+              <div class="form-group third-width">
+                <label for="sickDays">Sick Days</label>
+                <input type="number" id="sickDays" name="sickDays" min="0" max="30">
+              </div>
+            </div>
+          </div>
+
+          <!-- Password Information -->
+          <div class="form-section">
+            <div class="info-box">
+              <i class="fas fa-envelope"></i>
+              <span>Password will be automatically generated and emailed to the employee</span>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" onclick="closeAddEmployeeModal()">
+          <i class="fas fa-times"></i> Cancel
+        </button>
+        <button type="button" class="btn-primary" onclick="submitNewEmployee()" id="submitEmployeeBtn">
+          <i class="fas fa-user-plus"></i> Add Employee
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Weekly Holiday Modal -->
+  <div id="weeklyHolidayModal" class="modal-overlay">
+    <div class="modal-content weekly-holiday-modal">
+      <div class="modal-header">
+        <h2 id="weeklyHolidayModalTitle">
+          <i class="fas fa-plus"></i> Create Weekly Holiday Period
+        </h2>
+        <button class="modal-close" onclick="closeWeeklyHolidayModal()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <form id="weeklyHolidayForm" onsubmit="event.preventDefault(); submitWeeklyHolidayForm();">
+        <div class="modal-body">
+          <!-- Employee Selection -->
+          <div class="form-group">
+            <label for="weeklyHolidayEmployeeId">
+              <i class="fas fa-user"></i> Employee *
+            </label>
+            <select id="weeklyHolidayEmployeeId" required>
+              <option value="">Select Employee...</option>
+            </select>
+          </div>
+
+          <!-- Date Range -->
+          <div class="form-row">
+            <div class="form-group">
+              <label for="weeklyHolidayStartDate">
+                <i class="fas fa-calendar-alt"></i> Start Date *
+              </label>
+              <input type="date" id="weeklyHolidayStartDate" required>
+            </div>
+
+            <div class="form-group" id="endDateGroup">
+              <label for="weeklyHolidayEndDate">
+                <i class="fas fa-calendar-alt"></i> End Date
+              </label>
+              <input type="date" id="weeklyHolidayEndDate">
+            </div>
+          </div>
+
+          <!-- Period Type -->
+          <div class="form-group">
+            <label for="weeklyHolidayPeriodType">
+              <i class="fas fa-tag"></i> Period Type *
+            </label>
+            <select id="weeklyHolidayPeriodType" required onchange="handlePeriodTypeChange()">
+              <option value="standard">Standard (Ongoing)</option>
+              <option value="temp">Temporary (Fixed Duration)</option>
+            </select>
+            <small class="form-help">
+              <strong>Standard:</strong> Normal weekly holiday (no end date required)<br>
+              <strong>Temporary:</strong> Temporary change with specific end date
+            </small>
+          </div>
+
+          <!-- Holiday Days Selection -->
+          <div class="form-group">
+            <label>
+              <i class="fas fa-calendar-week"></i> Holiday Days *
+            </label>
+            <p class="form-help">Select which days of the week are holidays for this employee:</p>
+
+            <div class="holiday-days-selector">
+              <button type="button" class="holiday-day-toggle" data-day="Friday" onclick="toggleWeeklyHolidayDay(this)">
+                <i class="fas fa-calendar-day"></i> Friday
+              </button>
+              <button type="button" class="holiday-day-toggle" data-day="Saturday" onclick="toggleWeeklyHolidayDay(this)">
+                <i class="fas fa-calendar-day"></i> Saturday
+              </button>
+              <button type="button" class="holiday-day-toggle" data-day="Sunday" onclick="toggleWeeklyHolidayDay(this)">
+                <i class="fas fa-calendar-day"></i> Sunday
+              </button>
+              <button type="button" class="holiday-day-toggle" data-day="Monday" onclick="toggleWeeklyHolidayDay(this)">
+                <i class="fas fa-calendar-day"></i> Monday
+              </button>
+              <button type="button" class="holiday-day-toggle" data-day="Tuesday" onclick="toggleWeeklyHolidayDay(this)">
+                <i class="fas fa-calendar-day"></i> Tuesday
+              </button>
+              <button type="button" class="holiday-day-toggle" data-day="Wednesday" onclick="toggleWeeklyHolidayDay(this)">
+                <i class="fas fa-calendar-day"></i> Wednesday
+              </button>
+              <button type="button" class="holiday-day-toggle" data-day="Thursday" onclick="toggleWeeklyHolidayDay(this)">
+                <i class="fas fa-calendar-day"></i> Thursday
+              </button>
+            </div>
+
+            <div id="weeklyHolidayValidationMsg" class="validation-message"></div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" onclick="closeWeeklyHolidayModal()">
+            <i class="fas fa-times"></i> Cancel
+          </button>
+          <button type="submit" class="btn-primary">
+            <i class="fas fa-save"></i> Save Period
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Weekly Holiday Confirmation Dialog -->
+  <div id="weeklyHolidayConfirmationDialog" class="modal-overlay" style="display: none;">
+    <div class="modal-content confirmation-dialog">
+      <div class="modal-header">
+        <h3 id="weeklyHolidayConfirmationTitle">
+          <i class="fas fa-question-circle"></i> Confirm Action
+        </h3>
+      </div>
+      <div class="modal-body">
+        <div class="confirmation-message" id="weeklyHolidayConfirmationMessage">
+          Are you sure you want to perform this action?
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" onclick="closeWeeklyHolidayConfirmationDialog()">
+          <i class="fas fa-times"></i> Cancel
+        </button>
+        <button type="button" class="btn-danger" id="weeklyHolidayConfirmActionBtn" onclick="executeWeeklyHolidayConfirmedAction()">
+          <i class="fas fa-check"></i> Confirm
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PIN Verification Modal -->
+  <div id="pinVerificationModal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3><i class="fas fa-shield-alt"></i> Verify Your Identity</h3>
+      </div>
+      <div class="modal-body">
+        <p>A verification PIN has been sent to your email address. Please enter the PIN below to confirm your password
+          change:</p>
+
+        <div class="input-group">
+          <label for="verificationPIN">
+            <i class="fas fa-key"></i> Verification PIN
+          </label>
+          <input type="text" id="verificationPIN" class="form-input" placeholder="Enter 6-digit PIN" maxlength="6">
+        </div>
+
+        <div class="pin-timer">
+          <i class="fas fa-clock"></i> PIN expires in: <span id="pinCountdown">10:00</span>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" onclick="closePinVerificationModal()">
+          <i class="fas fa-times"></i> Cancel
+        </button>
+        <button type="button" class="btn-primary" onclick="verifyPinAndChangePassword()">
+          <i class="fas fa-check"></i> Verify & Change Password
+        </button>
+        <button type="button" class="btn-link" onclick="resendPasswordChangePIN()">
+          <i class="fas fa-redo"></i> Resend PIN
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add/Edit Admin Modal -->
+  <div id="adminFormModal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="adminFormModalTitle">
+          <i class="fas fa-user-plus"></i> Add New Administrator
+        </h3>
+      </div>
+      <div class="modal-body">
+        <form id="adminForm" onsubmit="saveAdminData(event)">
+          <div class="input-group">
+            <label for="adminName">
+              <i class="fas fa-user"></i> Full Name <span class="required">*</span>
+            </label>
+            <input type="text" id="adminName" class="form-input" required>
+          </div>
+
+          <div class="input-group">
+            <label for="adminEmail">
+              <i class="fas fa-envelope"></i> Email Address <span class="required">*</span>
+            </label>
+            <input type="email" id="adminEmail" class="form-input" required>
+          </div>
+
+          <div class="permissions-section">
+            <h5><i class="fas fa-cog"></i> Permissions & Settings</h5>
+
+            <div class="checkbox-group">
+              <label class="checkbox-label">
+                <input type="checkbox" id="adminFullPermission">
+                <span class="checkmark"></span>
+                <i class="fas fa-crown"></i> Full Permission
+                <small>Can manage other administrators and system settings</small>
+              </label>
+            </div>
+
+            <div class="checkbox-group">
+              <label class="checkbox-label">
+                <input type="checkbox" id="adminReceiveRequests" checked>
+                <span class="checkmark"></span>
+                <i class="fas fa-bell"></i> Receive Request Notifications
+                <small>Will receive email notifications for employee leave requests</small>
+              </label>
+            </div>
+          </div>
+
+          <input type="hidden" id="adminFormMode" value="add">
+          <input type="hidden" id="adminFormIndex" value="">
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" onclick="closeAdminFormModal()">
+          <i class="fas fa-times"></i> Cancel
+        </button>
+        <button type="submit" form="adminForm" class="btn-primary" id="saveAdminBtn">
+          <i class="fas fa-save"></i> Save Administrator
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Confirmation Dialog -->
+  <div id="confirmationDialog" class="modal" style="display: none;">
+    <div class="modal-content confirmation-dialog">
+      <div class="modal-header">
+        <h3 id="confirmationTitle">
+          <i class="fas fa-question-circle"></i> Confirm Action
+        </h3>
+      </div>
+      <div class="modal-body">
+        <div class="confirmation-message" id="confirmationMessage">
+          Are you sure you want to perform this action?
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" onclick="closeConfirmationDialog()">
+          <i class="fas fa-times"></i> Cancel
+        </button>
+        <button type="button" class="btn-danger" id="confirmActionBtn" onclick="executeConfirmedAction()">
+          <i class="fas fa-check"></i> Confirm
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Leave Request Response Modal -->
+  <div id="leaveRequestModal" class="modal" style="display: none;">
+    <div class="modal-content large-modal">
+
+      <!-- Modal Header -->
+      <div class="modal-header">
+        <h3 id="leaveRequestModalTitle">
+          <i class="fas fa-calendar-check"></i> Leave Request Details
+        </h3>
+        <span class="close" onclick="closeLeaveRequestModal()">&times;</span>
+      </div>
+
+      <!-- Modal Loading -->
+      <div id="modalLoading" class="modal-loading" style="display: none;">
+        <div class="loading-spinner">
+          <i class="fas fa-spinner fa-spin"></i>
+          <p>Loading request details...</p>
+        </div>
+      </div>
+
+      <!-- Modal Content -->
+      <div id="modalContent" class="modal-body">
+
+        <!-- Request Details Section -->
+        <div class="request-details-section">
+          <h4><i class="fas fa-info-circle"></i> Request Details</h4>
+
+          <div class="details-grid">
+            <div class="detail-group">
+              <label>Employee Name:</label>
+              <span id="modalEmployeeName">-</span>
+            </div>
+            <div class="detail-group">
+              <label>Employee ID:</label>
+              <span id="modalEmployeeId">-</span>
+            </div>
+            <div class="detail-group">
+              <label>Leave Type:</label>
+              <span id="modalLeaveType">-</span>
+            </div>
+            <div class="detail-group">
+              <label>Start Date:</label>
+              <span id="modalStartDate">-</span>
+            </div>
+            <div class="detail-group">
+              <label>End Date:</label>
+              <span id="modalEndDate">-</span>
+            </div>
+            <div class="detail-group">
+              <label>Total Duration:</label>
+              <span id="modalDuration">-</span>
+            </div>
+            <div class="detail-group">
+              <label>Net Leave Days:</label>
+              <span id="modalNetDays">-</span>
+            </div>
+            <div class="detail-group">
+              <label>Weekly Holidays:</label>
+              <span id="modalWeeklyHolidays">-</span>
+            </div>
+            <div class="detail-group">
+              <label>Request Date:</label>
+              <span id="modalRequestDate">-</span>
+            </div>
+            <div class="detail-group">
+              <label>Current Status:</label>
+              <span id="modalCurrentStatus" class="status-badge">-</span>
+            </div>
+          </div>
+
+          <div class="reason-section">
+            <label><strong>Reason for Leave:</strong></label>
+            <div class="reason-text" id="modalReason">-</div>
+          </div>
+        </div>
+
+        <!-- Existing Response Details -->
+        <div id="existingResponseDetails" style="display: none;">
+          <!-- Will be populated by JavaScript -->
+        </div>
+
+        <!-- Response Form Section -->
+        <div class="response-form-section">
+          <h4><i class="fas fa-reply"></i> Administrator Response</h4>
+
+          <form id="leaveResponseForm">
+            <!-- Response Type Toggle Buttons -->
+            <div class="form-group full-width">
+              <label class="required"><i class="fas fa-check-circle"></i> Response Decision:</label>
+              <div class="response-toggle-group">
+                <button type="button" class="response-toggle-btn" id="approveAllBtn" data-response="approve">
+                  <i class="fas fa-check"></i> Approve All
+                </button>
+                <button type="button" class="response-toggle-btn" id="rejectAllBtn" data-response="reject">
+                  <i class="fas fa-times"></i> Reject All
+                </button>
+                <button type="button" class="response-toggle-btn" id="selectDaysBtn" data-response="partial">
+                  <i class="fas fa-calendar-check"></i> Select Approved Days
+                </button>
+              </div>
+            </div>
+
+            <!-- Day Selection Section -->
+            <div id="daySelectionSection" class="form-group full-width" style="display: none;">
+              <label><i class="fas fa-calendar-alt"></i> Select Days to Approve:</label>
+              <div class="day-selection-container">
+                <div id="dayToggleButtons" class="day-toggle-group">
+                  <!-- Day buttons will be populated by JavaScript -->
+                </div>
+                <div class="day-selection-legend">
+                  <span class="legend-item">
+                    <span class="legend-day normal"></span> Regular Day
+                  </span>
+                  <span class="legend-item">
+                    <span class="legend-day holiday"></span> Weekly Holiday
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Real-time Calculations Display -->
+            <div class="calculations-display">
+              <div class="calc-item">
+                <i class="fas fa-check text-success"></i>
+                <span>Approved: <strong id="approvedCount">0</strong> days</span>
+              </div>
+              <div class="calc-item">
+                <i class="fas fa-times text-danger"></i>
+                <span>Rejected: <strong id="rejectedCount">0</strong> days</span>
+              </div>
+              <div class="calc-item">
+                <i class="fas fa-calendar-week text-info"></i>
+                <span>Holidays in Approved: <strong id="holidaysCount">0</strong> days</span>
+              </div>
+            </div>
+
+            <!-- Administrator Comments -->
+            <div class="form-group full-width">
+              <label for="adminComments"><i class="fas fa-comment"></i> Administrator Comments (Optional):</label>
+              <textarea id="adminComments" class="form-textarea" rows="3"
+                        placeholder="Add any additional comments or instructions..."></textarea>
+            </div>
+
+            <!-- Hidden fields for data submission -->
+            <input type="hidden" id="responseStatus" value="">
+            <input type="hidden" id="approvedDates" value="">
+            <input type="hidden" id="rejectedDates" value="">
+            <input type="hidden" id="approvedDuration" value="0">
+            <input type="hidden" id="rejectedDuration" value="0">
+            <input type="hidden" id="weeklyHolidaysInApproved" value="0">
+          </form>
+        </div>
+
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" onclick="closeLeaveRequestModal()">
+          <i class="fas fa-times"></i> Cancel
+        </button>
+        <button type="button" class="btn-warning" id="submitResponseBtn" onclick="submitLeaveResponse(false)">
+          <i class="fas fa-save"></i> Save Only
+        </button>
+        <button type="button" class="btn-primary" id="submitResponseNotifyBtn" onclick="submitLeaveResponse(true)">
+          <i class="fas fa-paper-plane"></i> Save & Notify Employee
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ======       System reset Modals          ===== -->
+  <div id="newSR_Modal" class="modal" style="display: none;">
+    <div class="modal-content" style="width: 1100px; max-width: 95%;">
+      <div class="modal-header">
+        <h2><i class="fas fa-sync-alt"></i> System Reset Wizard</h2>
+        <span class="close-btn" onclick="newSR_closeModal()">&times;</span>
+      </div>
+  
+      <div class="modal-body">
+  
+        <div id="newSR_Step1_Auth">
+          <div class="alert alert-warning">
+            <i class="fas fa-lock"></i> <strong>Security Check:</strong> Please enter your Admin Password to proceed.
+            This action requires <strong>Full Permission</strong>.
+          </div>
+          <div class="form-group">
+            <label>Admin Password</label>
+            <input type="password" id="newSR_PasswordInput" class="form-control" placeholder="Enter your login password">
+          </div>
+          <div style="text-align: right; margin-top: 15px;">
+            <button id="newSR_VerifyBtn" class="btn-primary" onclick="newSR_verifyPassword()">
+              Verify & Next <i class="fas fa-arrow-right"></i>
+            </button>
+          </div>
+        </div>
+  
+        <div id="newSR_Step2_Review" style="display: none;">
+          <div class="alert alert-info">
+            <i class="fas fa-info-circle"></i> <strong>Pre-Reset Review:</strong>
+            Below is a snapshot of current balances and outstanding leaves (non-rejected) for the current period, <strong>Please place the new opening balance for each leave type per employee (Default opening balances are pre-filled)</strong>.
+          </div>
+  
+          <div style="max-height: 300px; overflow-y: auto; border: 1px solid #ddd; margin-bottom: 20px;">
+            <table class="data-table" style="width: 100%;">
+              <thead style="position: sticky; top: 0 ; background-color: #2c3e50; color: #ffffff;">
+                <tr>
+                  <th style="padding: 12px; text-align: left; border-right: 1px solid #34495e;">Employee</th>
+                  <th style="padding: 12px; text-align: center; border-right: 1px solid #34495e;">Annual Bal</th>
+                  <th style="padding: 12px; text-align: center; border-right: 1px solid #34495e;">Sick Bal</th>
+                  <th style="padding: 12px; text-align: center; border-right: 1px solid #34495e;">Emerg. Bal</th>
+                  <th style="padding: 12px; text-align: center;">Outstanding Leaves</th>
+                </tr>
+              </thead>
+              <tbody id="newSR_EmployeeTableBody">
+              </tbody>
+            </table>
+          </div>
+  
+          <div class="form-row">
+            <div class="form-group col-6">
+              <label>New System Start Date</label>
+              <input type="date" id="newSR_NewStartDate" class="form-control">
+            </div>
+            <div class="form-group col-6">
+              <label>New System End Date</label>
+              <input type="date" id="newSR_NewEndDate" class="form-control">
+            </div>
+          </div>
+  
+          <div class="alert alert-danger" style="margin-top: 15px;">
+            <input type="checkbox" id="newSR_ConfirmArchive">
+            <label for="newSR_ConfirmArchive" style="display: inline;">
+              <strong>I confirm:</strong> Create an archive of the current system and prepare for reset.
+            </label>
+          </div>
+  
+          <div style="text-align: right; margin-top: 15px; display: flex; justify-content: flex-end; gap: 10px;">
+            <button class="btn-secondary" onclick="newSR_resetWizard()">Back</button>
+            
+            <button class="btn-warning" id="newSR_ArchiveBtn" onclick="newSR_executeArchive()" disabled>
+              <i class="fas fa-archive"></i> 1. Archive
+            </button>
+            
+            <button class="btn-danger" id="newSR_FinalResetBtn" onclick="newSR_triggerFinalReset()" style="display: none;">
+              <i class="fas fa-power-off"></i> 2. Confirm Reset
+            </button>
+          </div>
+        </div>
+  
+      </div>
+    </div>
+  </div>
+  <!-- confirm/alert system reset modals -->
+  <div id="sys_dialog_modal" class="modal" style="display: none; z-index: 2000;">
+    <div class="modal-content"
+      style="max-width: 450px; border-radius: 8px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
+  
+      <div id="sys_dialog_header" class="modal-header" style="padding: 15px 20px; color: white;">
+        <h3 id="sys_dialog_title" style="margin: 0; font-size: 1.1rem;"><i class="fas fa-info-circle"></i> Notification
+        </h3>
+        <span class="close-btn" onclick="sys_closeDialog()" style="color: white; opacity: 0.8;">&times;</span>
+      </div>
+  
+      <div class="modal-body" style="padding: 25px 20px; font-size: 1rem; color: #2c3e50; line-height: 1.5;">
+        <div id="sys_dialog_body"></div>
+      </div>
+  
+      <div class="modal-footer" id="sys_dialog_footer"
+        style="padding: 15px 20px; background: #f8f9fa; border-top: 1px solid #eee;">
+      </div>
+  
+    </div>
+  </div>
+
+  <!-- System archives -->
+  <div id="sys_versions_modal" class="modal" style="display: none;">
+    <div class="modal-content" style="width: 800px; max-width: 95%;">
+      <div class="modal-header" style="background-color: #3498db; color: white;">
+        <h2><i class="fas fa-history"></i> System Version History</h2>
+        <span class="close-btn" onclick="document.getElementById('sys_versions_modal').style.display='none'">&times;</span>
+      </div>
+  
+      <div class="modal-body" style="padding: 20px;">
+        <div id="sys_versions_loader" style="text-align: center; padding: 20px;">
+          <i class="fas fa-spinner fa-spin fa-2x"></i><br>Loading Archives...
+        </div>
+  
+        <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+          <table class="data-table" style="width: 100%; border-collapse: collapse;">
+            <thead style="position: sticky; top: 0; background: #ecf0f1; color: #2c3e50;">
+              <tr>
+                <th style="padding: 10px; text-align: center;">Ver #</th>
+                <th style="padding: 10px; text-align: left;">Period Covered</th>
+                <th style="padding: 10px; text-align: left;">Reset Date / By</th>
+                <th style="padding: 10px; text-align: center;">Action</th>
+              </tr>
+            </thead>
+            <tbody id="sys_versions_table_body">
+            </tbody>
+          </table>
+        </div>
+      </div>
+  
+      <div class="modal-footer">
+        <button class="btn-secondary" onclick="document.getElementById('sys_versions_modal').style.display='none'">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Include JavaScript files -->
+  <?!= include('script-utils-auth'); ?>
+  <?!= include('script-admin'); ?>
+  <?!= include('script-employee'); ?>
+
+  <script>
+    // Initialize the page
+    document.addEventListener('DOMContentLoaded', function() {
+      showHomepage();
+      loadActiveEmployees();
+      loadActiveAdmins();
+    });
+  </script>
+
+</body>
+
+</html>
