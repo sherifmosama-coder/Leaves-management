@@ -1,0 +1,664 @@
+<script>
+/* ============================================================================
+   HOLIDAY MANAGEMENT SYSTEM - UTILITIES AND AUTHENTICATION
+   Common utilities, authentication functions, and shared components
+   ============================================================================ */
+
+/* ============================================================================
+   GLOBAL VARIABLES
+   ============================================================================ */
+let toastContainer = null;
+let currentUser = null;
+let sessionTimeout = null;
+
+/* ============================================================================
+   INITIALIZATION
+   ============================================================================ */
+
+/**
+ * Initialize common utilities and components
+ */
+document.addEventListener('DOMContentLoaded', function() {
+    initializeToastContainer();
+    initializeSessionTimeout();
+});
+
+/**
+ * Initialize toast notification container
+ */
+function initializeToastContainer() {
+    toastContainer = document.getElementById('toast-container');
+    if (!toastContainer) {
+        toastContainer = document.createElement('div');
+        toastContainer.id = 'toast-container';
+        toastContainer.className = 'toast-container';
+        document.body.appendChild(toastContainer);
+    }
+}
+
+/**
+ * Initialize session timeout handling
+ */
+function initializeSessionTimeout() {
+    // Reset session timeout on user activity
+    const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart'];
+    events.forEach(event => {
+        document.addEventListener(event, resetSessionTimeout, true);
+    });
+}
+
+/* ============================================================================
+   TOAST NOTIFICATION SYSTEM
+   ============================================================================ */
+
+/**
+ * Show toast notification - UPDATED with greeting type
+ * REPLACE the existing showToast function in script-utils-auth.html
+ * 
+ * @param {string} message - The message to display
+ * @param {string} type - Type of toast (success, error, warning, info, greeting)
+ * @param {number} duration - Duration in milliseconds (default: 4000, greeting: 5000)
+ */
+function showToast(message, type = 'info', duration = null) {
+    if (!toastContainer) {
+        initializeToastContainer();
+    }
+    
+    // Set default duration based on type
+    if (duration === null) {
+        duration = type === 'greeting' ? 5000 : 4000;
+    }
+    
+    // Remove existing toasts
+    const existingToasts = toastContainer.querySelectorAll('.toast');
+    existingToasts.forEach(toast => toast.remove());
+    
+    // Create toast element
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    
+    const iconMap = {
+        success: 'check-circle',
+        error: 'exclamation-triangle',
+        warning: 'exclamation-circle',
+        info: 'info-circle',
+        greeting: 'hand-wave' // Nice welcoming icon
+    };
+    
+    toast.innerHTML = `
+        <div class="toast-content">
+            <i class="fas fa-${iconMap[type] || 'info-circle'}"></i>
+            <span class="toast-message">${message}</span>
+            <button class="toast-close" onclick="this.parentElement.parentElement.remove()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    `;
+    
+    // Add to container
+    toastContainer.appendChild(toast);
+    
+    // Auto-remove after duration
+    setTimeout(() => {
+        if (toast.parentElement) {
+            toast.classList.add('toast-fade-out');
+            setTimeout(() => toast.remove(), 300);
+        }
+    }, duration);
+    
+    // Add slide-in animation
+    setTimeout(() => toast.classList.add('toast-show'), 10);
+}
+
+/* ============================================================================
+   EMPLOYEE ID STANDARDIZATION
+   ============================================================================ */
+
+/**
+ * Standardized Employee ID matching function
+ * @param {any} id1 - First ID to compare
+ * @param {any} id2 - Second ID to compare
+ * @returns {boolean} - True if IDs match
+ */
+function matchEmployeeId(id1, id2) {
+    if (id1 === null || id1 === undefined || id2 === null || id2 === undefined) {
+        return false;
+    }
+    
+    // Convert both to strings and trim whitespace
+    const normalizedId1 = String(id1).trim();
+    const normalizedId2 = String(id2).trim();
+    
+    // Check for empty strings
+    if (normalizedId1 === '' || normalizedId2 === '') {
+        return false;
+    }
+    
+    // Compare as strings and as numbers
+    return normalizedId1 === normalizedId2 || 
+           parseInt(normalizedId1) === parseInt(normalizedId2);
+}
+
+/**
+ * Validate Employee ID format
+ * @param {any} id - Employee ID to validate
+ * @returns {boolean} - True if valid
+ */
+function validateEmployeeId(id) {
+    if (id === null || id === undefined) {
+        return false;
+    }
+    
+    const normalizedId = String(id).trim();
+    
+    // Check if empty
+    if (normalizedId === '') {
+        return false;
+    }
+    
+    // Check if it's a valid positive integer >= 101
+    const numericId = parseInt(normalizedId);
+    return !isNaN(numericId) && numericId >= 101 && numericId.toString() === normalizedId;
+}
+
+/**
+ * Normalize Employee ID to standard format
+ * @param {any} id - Employee ID to normalize
+ * @returns {number|null} - Normalized ID or null if invalid
+ */
+function normalizeEmployeeId(id) {
+    if (!validateEmployeeId(id)) {
+        return null;
+    }
+    
+    return parseInt(String(id).trim());
+}
+
+/* ============================================================================
+   EMAIL VALIDATION AND STANDARDIZATION
+   ============================================================================ */
+
+/**
+ * Validate email format
+ * @param {string} email - Email to validate
+ * @returns {boolean} - True if valid
+ */
+function validateEmail(email) {
+    if (!email || typeof email !== 'string') {
+        return false;
+    }
+    
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email.trim());
+}
+
+/**
+ * Normalize email address
+ * @param {string} email - Email to normalize
+ * @returns {string|null} - Normalized email or null if invalid
+ */
+function normalizeEmail(email) {
+    if (!validateEmail(email)) {
+        return null;
+    }
+    
+    return email.trim().toLowerCase();
+}
+
+/**
+ * Match email addresses (case-insensitive)
+ * @param {string} email1 - First email
+ * @param {string} email2 - Second email
+ * @returns {boolean} - True if emails match
+ */
+function matchEmail(email1, email2) {
+    const normalizedEmail1 = normalizeEmail(email1);
+    const normalizedEmail2 = normalizeEmail(email2);
+    
+    if (!normalizedEmail1 || !normalizedEmail2) {
+        return false;
+    }
+    
+    return normalizedEmail1 === normalizedEmail2;
+}
+
+/* ============================================================================
+   DATE UTILITIES
+   ============================================================================ */
+
+/**
+ * Format date for display
+ * @param {string|Date} date - Date to format
+ * @param {string} format - Format type ('short', 'long', 'input')
+ * @returns {string} - Formatted date
+ */
+function formatDate(date, format = 'short') {
+    if (!date) return '';
+    
+    try {
+        const d = new Date(date);
+        
+        if (isNaN(d.getTime())) {
+            return 'Invalid date';
+        }
+        
+        switch (format) {
+            case 'input':
+                return d.toISOString().split('T')[0]; // YYYY-MM-DD
+            case 'long':
+                return d.toLocaleDateString('en-US', {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+            case 'short':
+            default:
+                return d.toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric'
+                });
+        }
+    } catch (error) {
+        console.error('Date formatting error:', error);
+        return 'Invalid date';
+    }
+}
+
+/**
+ * Format datetime for input field
+ * @param {string|Date} date - Date to format
+ * @returns {string} - Formatted datetime (YYYY-MM-DDTHH:MM)
+ */
+function formatDateTime(date) {
+    if (!date) return '';
+    
+    try {
+        const d = new Date(date);
+        
+        if (isNaN(d.getTime())) {
+            return '';
+        }
+        
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        const hours = String(d.getHours()).padStart(2, '0');
+        const minutes = String(d.getMinutes()).padStart(2, '0');
+        
+        return `${year}-${month}-${day}T${hours}:${minutes}`;
+    } catch (error) {
+        console.error('DateTime formatting error:', error);
+        return '';
+    }
+}
+
+/**
+ * Calculate days between two dates
+ * @param {string|Date} startDate - Start date
+ * @param {string|Date} endDate - End date
+ * @returns {number} - Number of days
+ */
+function calculateDays(startDate, endDate) {
+    try {
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        
+        if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+            return 0;
+        }
+        
+        const timeDiff = end.getTime() - start.getTime();
+        return Math.ceil(timeDiff / (1000 * 3600 * 24)) + 1; // Include both start and end dates
+    } catch (error) {
+        console.error('Date calculation error:', error);
+        return 0;
+    }
+}
+
+/**
+ * Check if date is within system period
+ * @param {string|Date} date - Date to check
+ * @param {string|Date} systemStart - System start date
+ * @param {string|Date} systemEnd - System end date
+ * @returns {boolean} - True if within period
+ */
+function isDateWithinSystemPeriod(date, systemStart, systemEnd) {
+    try {
+        const checkDate = new Date(date);
+        const startDate = new Date(systemStart);
+        const endDate = new Date(systemEnd);
+        
+        if (isNaN(checkDate.getTime()) || isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+            return false;
+        }
+        
+        return checkDate >= startDate && checkDate <= endDate;
+    } catch (error) {
+        console.error('Date validation error:', error);
+        return false;
+    }
+}
+
+/* ============================================================================
+   FORM VALIDATION UTILITIES
+   ============================================================================ */
+
+/**
+ * Validate required field
+ * @param {string} value - Value to validate
+ * @param {string} fieldName - Field name for error message
+ * @returns {object} - Validation result
+ */
+function validateRequired(value, fieldName) {
+    const trimmed = String(value || '').trim();
+    
+    if (!trimmed) {
+        return {
+            valid: false,
+            error: `${fieldName} is required`
+        };
+    }
+    
+    return { valid: true };
+}
+
+/**
+ * Validate number range
+ * @param {any} value - Value to validate
+ * @param {number} min - Minimum value
+ * @param {number} max - Maximum value
+ * @param {string} fieldName - Field name for error message
+ * @returns {object} - Validation result
+ */
+function validateNumberRange(value, min, max, fieldName) {
+    const num = Number(value);
+    
+    if (isNaN(num)) {
+        return {
+            valid: false,
+            error: `${fieldName} must be a valid number`
+        };
+    }
+    
+    if (num < min || num > max) {
+        return {
+            valid: false,
+            error: `${fieldName} must be between ${min} and ${max}`
+        };
+    }
+    
+    return { valid: true };
+}
+
+/**
+ * Validate date range
+ * @param {string} startDate - Start date
+ * @param {string} endDate - End date
+ * @returns {object} - Validation result
+ */
+function validateDateRange(startDate, endDate) {
+    try {
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        
+        if (isNaN(start.getTime())) {
+            return {
+                valid: false,
+                error: 'Start date is invalid'
+            };
+        }
+        
+        if (isNaN(end.getTime())) {
+            return {
+                valid: false,
+                error: 'End date is invalid'
+            };
+        }
+        
+        if (start >= end) {
+            return {
+                valid: false,
+                error: 'End date must be after start date'
+            };
+        }
+        
+        return { valid: true };
+    } catch (error) {
+        return {
+            valid: false,
+            error: 'Invalid date format'
+        };
+    }
+}
+
+/* ============================================================================
+   LOADING AND UI UTILITIES
+   ============================================================================ */
+
+/**
+ * Set loading state for element
+ * @param {string|HTMLElement} element - Element ID or element
+ * @param {boolean} isLoading - Whether to show loading
+ * @param {string} loadingText - Loading text to display
+ */
+function setLoadingState(element, isLoading, loadingText = 'Loading...') {
+    const el = typeof element === 'string' ? document.getElementById(element) : element;
+    
+    if (!el) return;
+    
+    if (isLoading) {
+        el.dataset.originalContent = el.innerHTML;
+        el.innerHTML = `<i class="fas fa-spinner fa-spin"></i> ${loadingText}`;
+        el.disabled = true;
+    } else {
+        if (el.dataset.originalContent) {
+            el.innerHTML = el.dataset.originalContent;
+            delete el.dataset.originalContent;
+        }
+        el.disabled = false;
+    }
+}
+
+/**
+ * Show/hide element with animation
+ * @param {string|HTMLElement} element - Element ID or element
+ * @param {boolean} show - Whether to show or hide
+ * @param {string} animation - Animation type ('fade', 'slide')
+ */
+function toggleElement(element, show, animation = 'fade') {
+    const el = typeof element === 'string' ? document.getElementById(element) : element;
+    
+    if (!el) return;
+    
+    if (show) {
+        el.style.display = 'block';
+        if (animation === 'fade') {
+            el.style.opacity = '0';
+            setTimeout(() => el.style.opacity = '1', 10);
+        }
+    } else {
+        if (animation === 'fade') {
+            el.style.opacity = '0';
+            setTimeout(() => el.style.display = 'none', 300);
+        } else {
+            el.style.display = 'none';
+        }
+    }
+}
+
+/**
+ * Debounce function to limit function calls
+ * @param {function} func - Function to debounce
+ * @param {number} wait - Wait time in milliseconds
+ * @returns {function} - Debounced function
+ */
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
+/* ============================================================================
+   SESSION MANAGEMENT
+   ============================================================================ */
+
+/**
+ * Reset session timeout
+ */
+function resetSessionTimeout() {
+    if (sessionTimeout) {
+        clearTimeout(sessionTimeout);
+    }
+    
+    // Set session timeout to 30 minutes
+    sessionTimeout = setTimeout(() => {
+        showToast('Your session has expired. Please log in again.', 'warning', 6000);
+        setTimeout(() => {
+            logout();
+        }, 6000);
+    }, 30 * 60 * 1000); // 30 minutes
+}
+
+/**
+ * Clear session data
+ */
+function clearSession() {
+    currentUser = null;
+    if (sessionTimeout) {
+        clearTimeout(sessionTimeout);
+        sessionTimeout = null;
+    }
+}
+
+/* ============================================================================
+   ERROR HANDLING
+   ============================================================================ */
+
+/**
+ * Handle Google Apps Script errors
+ * @param {Error} error - Error object
+ * @param {string} context - Context where error occurred
+ */
+function handleGASError(error, context = '') {
+    console.error(`GAS Error ${context}:`, error);
+    
+    let message = 'An unexpected error occurred';
+    
+    if (error.message) {
+        if (error.message.includes('Permission denied')) {
+            message = 'You do not have permission to perform this action';
+        } else if (error.message.includes('timeout')) {
+            message = 'The request timed out. Please try again';
+        } else if (error.message.includes('not found')) {
+            message = 'The requested resource was not found';
+        } else {
+            message = error.message;
+        }
+    }
+    
+    showToast(message, 'error');
+}
+
+/**
+ * Wrap Google Apps Script calls with error handling
+ * @param {function} gasFunction - GAS function to call
+ * @param {function} successHandler - Success callback
+ * @param {function} failureHandler - Failure callback (optional)
+ * @param {string} context - Context for error messages
+ */
+function callGAS(gasFunction, successHandler, failureHandler = null, context = '') {
+    gasFunction
+        .withSuccessHandler(successHandler)
+        .withFailureHandler(failureHandler || ((error) => handleGASError(error, context)));
+}
+
+/* ============================================================================
+   DATA EXPORT/IMPORT UTILITIES
+   ============================================================================ */
+
+/**
+ * Export data to CSV
+ * @param {Array} data - Array of objects to export
+ * @param {string} filename - Filename for download
+ */
+function exportToCSV(data, filename) {
+    if (!data || data.length === 0) {
+        showToast('No data to export', 'warning');
+        return;
+    }
+    
+    try {
+        const headers = Object.keys(data[0]);
+        const csvContent = [
+            headers.join(','),
+            ...data.map(row => 
+                headers.map(header => 
+                    `"${String(row[header] || '').replace(/"/g, '""')}"`
+                ).join(',')
+            )
+        ].join('\n');
+        
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        
+        link.setAttribute('href', url);
+        link.setAttribute('download', filename);
+        link.style.visibility = 'hidden';
+        
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        showToast('Data exported successfully', 'success');
+    } catch (error) {
+        console.error('Export error:', error);
+        showToast('Failed to export data', 'error');
+    }
+}
+
+/* ============================================================================
+   INITIALIZATION HELPERS
+   ============================================================================ */
+
+/**
+ * Safe element query with error handling
+ * @param {string} selector - CSS selector
+ * @param {HTMLElement} parent - Parent element (optional)
+ * @returns {HTMLElement|null} - Found element or null
+ */
+function safeQuery(selector, parent = document) {
+    try {
+        return parent.querySelector(selector);
+    } catch (error) {
+        console.error(`Query error for selector "${selector}":`, error);
+        return null;
+    }
+}
+
+/**
+ * Safe event listener attachment
+ * @param {string|HTMLElement} element - Element or selector
+ * @param {string} event - Event type
+ * @param {function} handler - Event handler
+ * @param {boolean} useCapture - Use capture (optional)
+ */
+function safeAddEventListener(element, event, handler, useCapture = false) {
+    try {
+        const el = typeof element === 'string' ? document.querySelector(element) : element;
+        if (el) {
+            el.addEventListener(event, handler, useCapture);
+        }
+    } catch (error) {
+        console.error(`Event listener error:`, error);
+    }
+}
+</script>
